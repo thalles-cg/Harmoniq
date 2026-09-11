@@ -6,6 +6,6 @@ class Genero(Base):
   __tablename__ = "genero"
 
   id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-  nome: Mapped[str] = mapped_column(String(255))
+  nome: Mapped[str] = mapped_column(String(255), unique=True)
   
   musicas: Mapped[list["MusicaGenero"]] = relationship(back_populates="genero")

@@ -7,7 +7,7 @@ class Usuario(Base):
 
   id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
   nome: Mapped[str] = mapped_column(String(255))
-  email: Mapped[str] = mapped_column(String(255))
+  email: Mapped[str] = mapped_column(String(255), unique=True)
   senha_hash: Mapped[str] = mapped_column(String(255))
 
   acordes: Mapped[list["UsuarioAcorde"]] = relationship(back_populates="usuario")
