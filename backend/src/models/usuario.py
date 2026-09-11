@@ -8,4 +8,4 @@ class Usuario(Base):
   id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
   nome: Mapped[str] = mapped_column(String(255))
   email: Mapped[str] = mapped_column(String(255))
-  senha: Mapped[str] = mapped_column(String(255))
+  senha_hash: Mapped[str] = mapped_column(String(255))
