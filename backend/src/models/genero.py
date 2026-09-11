@@ -7,3 +7,5 @@ class Genero(Base):
 
   id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
   nome: Mapped[str] = mapped_column(String(255))
+  
+  musicas: Mapped[list["MusicaGenero"]] = relationship(back_populates="genero")

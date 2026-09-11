@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.database import Base
 
 class MusicaGenero(Base):
@@ -7,3 +7,6 @@ class MusicaGenero(Base):
 
   musica_id: Mapped[int] = mapped_column(ForeignKey("musica.id"), primary_key=True)
   genero_id: Mapped[int] = mapped_column(ForeignKey("genero.id"), primary_key=True)
+
+  genero: Mapped["Genero"] = relationship(back_populates="musicas")
+  musica: Mapped["Musica"] = relationship(back_populates="generos")

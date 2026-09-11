@@ -1,5 +1,5 @@
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.database import Base
 
 class Usuario(Base):
@@ -9,3 +9,6 @@ class Usuario(Base):
   nome: Mapped[str] = mapped_column(String(255))
   email: Mapped[str] = mapped_column(String(255))
   senha_hash: Mapped[str] = mapped_column(String(255))
+
+  acordes: Mapped[list["UsuarioAcorde"]] = relationship(back_populates="usuario")
+  favoritos: Mapped[list["Favorito"]] = relationship(back_populates="usuario")
