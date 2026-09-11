@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from src.router import router
 
 app = FastAPI(
   title="Harmoniq API",
@@ -6,6 +7,4 @@ app = FastAPI(
   version="0.1.0",
 )
 
-@app.get("/health")
-def health():
-  return {"status": "ok"}
+app.include_router(router)
