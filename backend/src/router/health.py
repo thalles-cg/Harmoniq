@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from sqlalchemy import text
-from src.database import engine
+from sqlalchemy.orm import Session
+from src.database.dependencies import get_db
 
 router = APIRouter()
 
@@ -9,9 +10,8 @@ def health():
   return {"status": "ok"}
 
 @router.get("/health/database")
-def health_deep():
-  with engine.connect() as connection:
-    connection.execute(text("SELECT 1"))
+def health_database(db: Session = Depends(get_db)):
+  db.execute(text("SELECT 1"))
 
   return {
     "status": "ok",
