@@ -5,6 +5,7 @@ class AcordeBase(BaseModel):
   nome_extenso: str
   nota_fundamental_id: int
   qualidade: str
+  notas: list[int]
 
 class AcordeCreate(AcordeBase):
   pass
