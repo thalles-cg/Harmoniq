@@ -17,4 +17,5 @@ __all__ = [
   "NotaCreate",
   "NotaResponse",
   "NotaUpdate",
+  "AcordeUpdate",
 ]
