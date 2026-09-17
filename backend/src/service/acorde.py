@@ -39,16 +39,13 @@ def criar_acorde(db: Session, dados: AcordeCreate) -> Acorde | None:
 
   return novo_acorde
 
-
 def listar_acordes(db: Session) -> list[Acorde]:
   return db.query(Acorde).all()
-
 
 def buscar_acorde(db: Session, acorde_id: int) -> Acorde | None:
   return db.query(Acorde).filter(
     Acorde.id == acorde_id
   ).first()
-
 
 def atualizar_acorde(db: Session, acorde_id: int, dados: AcordeUpdate) -> Acorde | None:
   acorde = buscar_acorde(db, acorde_id)
@@ -98,7 +95,6 @@ def atualizar_acorde(db: Session, acorde_id: int, dados: AcordeUpdate) -> Acorde
   db.refresh(acorde)
 
   return acorde
-
 
 def excluir_acorde(db: Session, acorde_id: int) -> bool:
   acorde = buscar_acorde(db, acorde_id)
