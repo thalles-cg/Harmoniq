@@ -1,4 +1,4 @@
-from .acorde import AcordeBase, AcordeCreate, AcordeResponse
+from .acorde import AcordeBase, AcordeCreate, AcordeResponse, AcordeUpdate
 from .artista import ArtistaBase, ArtistaCreate, ArtistaResponse
 from .musica import MusicaBase, MusicaCreate, MusicaResponse
 from .nota import NotaBase, NotaCreate, NotaResponse, NotaUpdate
