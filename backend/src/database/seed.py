@@ -439,11 +439,11 @@ def seed_musicas(db: Session):
     },
     {
       "titulo": "Garota de Ipanema",
-      "acordes": ["F", "G7", "Gm7", "C7"],
+      "acordes": ["F", "G7", "C7"],
     },
     {
       "titulo": "Desafinado",
-      "acordes": ["F", "G7", "Gm7", "C7"],
+      "acordes": ["F", "G7", "C7"],
     },
     {
       "titulo": "Corcovado",
