@@ -1,5 +1,6 @@
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
-from src.model import Album, Musica
+from src.model import Acorde, Album, Musica, MusicaAcorde
 from src.schema.musica import MusicaCreate, MusicaUpdate
 
 def criar_musica(db: Session, dados: MusicaCreate) -> Musica | None:
@@ -31,6 +32,35 @@ def buscar_musica(db: Session, musica_id: int) -> Musica | None:
   return db.query(Musica).filter(
     Musica.id == musica_id
   ).first()
+
+def buscar_por_repertorio(db: Session, nomes_acordes: list[str]) -> list[Musica]:
+  nomes_acordes = list({
+    nome.strip()
+    for nome in nomes_acordes
+    if nome.strip()
+  })
+
+  if not nomes_acordes:
+    return []
+
+  musicas = (
+    db.query(Musica)
+    .join(MusicaAcorde, MusicaAcorde.musica_id == Musica.id)
+    .join(Acorde, Acorde.id == MusicaAcorde.acorde_id)
+    .group_by(Musica.id)
+    .having(func.count(func.distinct(Acorde.id)) > 0)
+    .having(
+      func.sum(
+        case(
+          (Acorde.nome_cifra.not_in(nomes_acordes), 1),
+          else_=0
+        )
+      ) == 0
+    )
+    .all()
+  )
+
+  return musicas
 
 def atualizar_musica(db: Session, musica_id: int, dados: MusicaUpdate) -> Musica | None:
   musica = buscar_musica(db, musica_id)
