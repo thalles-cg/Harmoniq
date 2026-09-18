@@ -1,6 +1,6 @@
 from .acorde import AcordeBase, AcordeCreate, AcordeResponse, AcordeUpdate
 from .artista import ArtistaBase, ArtistaCreate, ArtistaResponse
-from .musica import MusicaBase, MusicaCreate, MusicaResponse
+from .musica import MusicaBase, MusicaCreate, MusicaResponse, MusicaUpdate
 from .nota import NotaBase, NotaCreate, NotaResponse, NotaUpdate
 
 __all__ = [
@@ -13,6 +13,7 @@ __all__ = [
   "MusicaBase",
   "MusicaCreate",
   "MusicaResponse",
+  "MusicaUpdate",
   "NotaBase",
   "NotaCreate",
   "NotaResponse",
