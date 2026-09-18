@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { Search, X, Sparkles, ListOrdered, LayoutGrid } from "lucide-react";
-import { MANUAL_SONGS, SongResults } from "./SongResults";
+import { SongResults, type Song } from "./SongResults";
 
 const ROOTS = ["C", "D", "E", "F", "G", "A", "B"];
 const MODIFIERS = ["", "m", "7", "maj7"];
+
+const API_URL = import.meta.env["VITE_API_URL"];
 
 export function ManualPanel() {
   const [mode, setMode] = useState<"exact" | "repertoire">("exact");
@@ -11,22 +13,77 @@ export function ManualPanel() {
   const [chords, setChords] = useState<string[]>(["C", "G", "Am", "F"]);
   const [capo, setCapo] = useState(true);
   const [searched, setSearched] = useState(false);
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const visibleRoots = useMemo(
-    () => ROOTS.filter((r) => r.toLowerCase().startsWith(query.trim().toLowerCase().slice(0, 1))),
+    () =>
+      ROOTS.filter((r) =>
+        r
+          .toLowerCase()
+          .startsWith(query.trim().toLowerCase().slice(0, 1)),
+      ),
     [query],
   );
 
-  const addChord = (chord: string) => setChords((prev) => [...prev, chord]);
-  const removeChord = (index: number) => setChords((prev) => prev.filter((_, i) => i !== index));
+  const addChord = (chord: string) => {
+    setChords((prev) => [...prev, chord]);
+  };
+
+  const removeChord = (index: number) => {
+    setChords((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSearch = async () => {
+    if (chords.length === 0) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const params = new URLSearchParams();
+
+      chords.forEach((acorde) => {
+        params.append("acordes", acorde);
+      });
+
+      const response = await fetch(
+        `${API_URL}/musicas/busca/repertorio?${params.toString()}`,
+      );
+
+      if (!response.ok) {
+        throw new Error("Erro ao buscar músicas.");
+      }
+
+      const data: Song[] = await response.json();
+
+      setSongs(data);
+      setSearched(true);
+    } catch (error) {
+      console.error("Erro ao buscar músicas:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 px-4 pb-16 sm:px-6">
       <div className="inline-flex rounded-2xl bg-secondary/70 p-1">
         {(
           [
-            { id: "exact", label: "Sequência Exata", hint: "A ordem importa", icon: ListOrdered },
-            { id: "repertoire", label: "Meu Repertório", hint: "Acordes que eu sei", icon: LayoutGrid },
+            {
+              id: "exact",
+              label: "Sequência Exata",
+              hint: "A ordem importa",
+              icon: ListOrdered,
+            },
+            {
+              id: "repertoire",
+              label: "Meu Repertório",
+              hint: "Acordes que eu sei",
+              icon: LayoutGrid,
+            },
           ] as const
         ).map((tab) => (
           <button
@@ -44,6 +101,7 @@ export function ManualPanel() {
           </button>
         ))}
       </div>
+
       <p className="text-sm text-muted-foreground">
         {mode === "exact"
           ? "Buscamos músicas com essa progressão na mesma ordem."
@@ -53,6 +111,7 @@ export function ManualPanel() {
       <div className="glass space-y-5 rounded-2xl p-5">
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -69,13 +128,17 @@ export function ManualPanel() {
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
           {(visibleRoots.length ? visibleRoots : ROOTS).map((root) => (
-            <div key={root} className="rounded-xl border border-border bg-background/40 p-2">
+            <div
+              key={root}
+              className="rounded-xl border border-border bg-background/40 p-2"
+            >
               <button
                 onClick={() => addChord(root)}
                 className="w-full rounded-lg bg-secondary py-2 font-display text-lg font-semibold transition-colors hover:bg-[image:var(--gradient-manual)] hover:text-primary-foreground"
               >
                 {root}
               </button>
+
               <div className="mt-2 grid grid-cols-3 gap-1">
                 {MODIFIERS.slice(1).map((mod) => (
                   <button
@@ -95,17 +158,25 @@ export function ManualPanel() {
           <p className="mb-2 text-xs tracking-wide text-muted-foreground uppercase">
             {mode === "exact" ? "Sequência selecionada" : "Meus acordes"}
           </p>
+
           <div className="flex min-h-12 flex-wrap items-center gap-2 rounded-xl border border-dashed border-border p-3">
             {chords.length === 0 && (
-              <span className="text-sm text-muted-foreground">Nenhum acorde selecionado ainda.</span>
+              <span className="text-sm text-muted-foreground">
+                Nenhum acorde selecionado ainda.
+              </span>
             )}
+
             {chords.map((chord, i) => (
               <span
                 key={`${chord}-${i}`}
                 className="flex items-center gap-2 rounded-full bg-[image:var(--gradient-manual)] px-3 py-1.5 text-sm font-medium text-primary-foreground"
               >
                 {chord}
-                <button onClick={() => removeChord(i)} aria-label={`Remover ${chord}`}>
+
+                <button
+                  onClick={() => removeChord(i)}
+                  aria-label={`Remover ${chord}`}
+                >
                   <X className="size-3.5 opacity-80 hover:opacity-100" />
                 </button>
               </span>
@@ -132,15 +203,16 @@ export function ManualPanel() {
         </label> */}
 
         <button
-          onClick={() => setSearched(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[image:var(--gradient-manual)] px-6 py-3.5 font-display font-semibold text-primary-foreground shadow-[var(--shadow-glow-manual)] transition-transform hover:scale-[1.01]"
+          onClick={handleSearch}
+          disabled={loading || chords.length === 0}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[image:var(--gradient-manual)] px-6 py-3.5 font-display font-semibold text-primary-foreground shadow-[var(--shadow-glow-manual)] transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Sparkles className="size-4" />
-          Buscar Músicas
+          {loading ? "Buscando..." : "Buscar Músicas"}
         </button>
       </div>
 
-      {searched && <SongResults songs={MANUAL_SONGS} tone="manual" />}
+      {searched && <SongResults songs={songs} tone="manual" />}
     </div>
   );
 }

@@ -1,9 +1,40 @@
 import { useEffect, useRef, useState } from "react";
 import { Mic, Square, UploadCloud, Volume2, Sparkles, Loader2 } from "lucide-react";
-import { AUDIO_SONGS, SongResults } from "./SongResults";
+import { SongResults, type Song } from "./SongResults";
 
 const BARS = Array.from({ length: 36 }, (_, i) => i);
 const DETECTED = ["G", "D", "Em", "C", "G", "D", "C", "C"];
+
+const AUDIO_SONGS: Song[] = [
+  {
+    id: 1,
+    titulo: "Além do Horizonte",
+    letra: null,
+    album_id: null,
+    progressao_relativa: "G - D - Em - C",
+  },
+  {
+    id: 2,
+    titulo: "Toda Forma de Amor",
+    letra: null,
+    album_id: null,
+    progressao_relativa: "C - Am - F - G",
+  },
+  {
+    id: 3,
+    titulo: "Pais e Filhos",
+    letra: null,
+    album_id: null,
+    progressao_relativa: "D - A - Bm - G",
+  },
+  {
+    id: 4,
+    titulo: "Riptide",
+    letra: null,
+    album_id: null,
+    progressao_relativa: "Am - G - C - C",
+  },
+];
 
 export function AudioPanel() {
   const [recording, setRecording] = useState(false);
