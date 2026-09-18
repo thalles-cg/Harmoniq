@@ -14,13 +14,13 @@ def criar_musica(dados: MusicaCreate, db: Session = Depends(get_db)):
 def listar_musicas(db: Session = Depends(get_db)):
   return controller.listar(db)
 
-@router.get("/{musica_id}", response_model=MusicaResponse)
-def buscar_musica(musica_id: int, db: Session = Depends(get_db)):
-  return controller.buscar(db, musica_id)
-
 @router.get("/busca/repertorio", response_model=list[MusicaResponse])
 def buscar_por_repertorio(acordes: list[str] = Query(...), db: Session = Depends(get_db)):
   return controller.buscar_repertorio(db, acordes)
+
+@router.get("/{musica_id}", response_model=MusicaResponse)
+def buscar_musica(musica_id: int, db: Session = Depends(get_db)):
+  return controller.buscar(db, musica_id)
 
 @router.patch("/{musica_id}", response_model=MusicaResponse)
 def atualizar_musica(musica_id: int, dados: MusicaUpdate, db: Session = Depends(get_db)):
