@@ -10,11 +10,17 @@ const API_URL = import.meta.env["VITE_API_URL"];
 export function ManualPanel() {
   const [mode, setMode] = useState<"exact" | "repertoire">("exact");
   const [query, setQuery] = useState("");
-  const [chords, setChords] = useState<string[]>(["C", "G", "Am", "F"]);
-  const [capo, setCapo] = useState(true);
-  const [searched, setSearched] = useState(false);
-  const [songs, setSongs] = useState<Song[]>([]);
+
+  const [exactChords, setExactChords] = useState<string[]>(["C", "G", "Am", "F",]);
+  const [repertoireChords, setRepertoireChords] = useState<string[]>([]);
+
+  const [exactSongs, setExactSongs] = useState<Song[]>([]);
+  const [repertoireSongs, setRepertoireSongs] = useState<Song[]>([]);
+
+  const [repertoireSearched, setRepertoireSearched] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [capo, setCapo] = useState(true);
 
   const visibleRoots = useMemo(
     () =>
@@ -26,16 +32,30 @@ export function ManualPanel() {
     [query],
   );
 
+  const chords = mode === "exact" ? exactChords : repertoireChords;
+
   const addChord = (chord: string) => {
-    setChords((prev) => [...prev, chord]);
+    if (mode === "exact") {
+      setExactChords((prev) => [...prev, chord]);
+    } else {
+      setRepertoireChords((prev) => [...prev, chord]);
+    }
   };
 
   const removeChord = (index: number) => {
-    setChords((prev) => prev.filter((_, i) => i !== index));
+    if (mode === "exact") {
+      setExactChords((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      setRepertoireChords((prev) => prev.filter((_, i) => i !== index));
+    }
   };
 
   const handleSearch = async () => {
-    if (chords.length === 0) {
+    if (mode === "exact") {
+      return;
+    }
+
+    if (repertoireChords.length === 0) {
       return;
     }
 
@@ -44,7 +64,7 @@ export function ManualPanel() {
     try {
       const params = new URLSearchParams();
 
-      chords.forEach((acorde) => {
+      repertoireChords.forEach((acorde) => {
         params.append("acordes", acorde);
       });
 
@@ -58,8 +78,8 @@ export function ManualPanel() {
 
       const data: Song[] = await response.json();
 
-      setSongs(data);
-      setSearched(true);
+      setRepertoireSongs(data);
+      setRepertoireSearched(true);
     } catch (error) {
       console.error("Erro ao buscar músicas:", error);
     } finally {
@@ -212,7 +232,11 @@ export function ManualPanel() {
         </button>
       </div>
 
-      {searched && <SongResults songs={songs} tone="manual" />}
+      {mode === "repertoire" && repertoireSearched && (
+        <SongResults songs={repertoireSongs} tone="manual" />
+      )}
     </div>
   );
 }
+
+
