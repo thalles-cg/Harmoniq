@@ -1,6 +1,14 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Keyboard, Mic, ChevronUp, ChevronDown, ArrowLeft, Music } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  Keyboard,
+  Mic,
+  ChevronUp,
+  ChevronDown,
+  ArrowLeft,
+  Music,
+  LogIn,
+} from "lucide-react";
 import { ManualPanel } from "@/components/harmoniq/ManualPanel";
 import { AudioPanel } from "@/components/harmoniq/AudioPanel";
 
@@ -16,7 +24,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "HarmoniQ — Acordes e progressões" },
       {
         property: "og:description",
-        content: "Busque músicas por progressão de acordes ou identifique acordes por áudio com IA.",
+        content:
+          "Busque músicas por progressão de acordes ou identifique acordes por áudio com IA.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -36,6 +45,7 @@ function Home() {
       : mode === "audio"
         ? "h-14"
         : "h-[50dvh]";
+
   const audioClass =
     mode === "audio"
       ? "h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-3.5rem)]"
@@ -45,7 +55,27 @@ function Home() {
 
   return (
     <main className="min-h-dvh overflow-hidden bg-background font-sans text-foreground">
-      <h1 className="sr-only">HarmoniQ — buscador de acordes e progressões musicais</h1>
+      <h1 className="sr-only">
+        HarmoniQ — buscador de acordes e progressões musicais
+      </h1>
+
+      {/* Barra superior */}
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 py-5">
+        <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-background/50 px-4 py-2 backdrop-blur-md">
+          <Music className="size-4 text-emerald" />
+          <span className="font-display text-sm font-semibold tracking-tight">
+            HarmoniQ
+          </span>
+        </div>
+
+        <Link
+          to="/login"
+          className="pointer-events-auto flex items-center gap-2 rounded-full bg-background/50 px-4 py-2 text-sm font-medium backdrop-blur-md transition-colors hover:bg-background/70"
+        >
+          <LogIn className="size-4" />
+          Entrar
+        </Link>
+      </header>
 
       {/* Manual section */}
       <section
@@ -59,6 +89,7 @@ function Home() {
             <span className="flex items-center gap-2 text-sm font-medium">
               <Keyboard className="size-4" /> Busca por Acordes
             </span>
+
             <ChevronDown className="size-5 text-muted-foreground" />
           </button>
         ) : mode === "manual" ? (
@@ -70,8 +101,12 @@ function Home() {
               >
                 <ArrowLeft className="size-4" /> Voltar
               </button>
-              <h2 className="truncate font-display text-lg font-semibold">Busca por Acordes</h2>
+
+              <h2 className="truncate font-display text-lg font-semibold">
+                Busca por Acordes
+              </h2>
             </header>
+
             <div className="min-h-0 flex-1 overflow-y-auto pt-2">
               <ManualPanel />
             </div>
@@ -84,10 +119,15 @@ function Home() {
             <span className="grid size-16 place-items-center rounded-2xl bg-[image:var(--gradient-manual)] shadow-[var(--shadow-glow-manual)] transition-transform group-hover:scale-110">
               <Keyboard className="size-8 text-primary-foreground" />
             </span>
-            <h2 className="font-display text-3xl font-bold sm:text-4xl">Busca por Acordes</h2>
+
+            <h2 className="font-display text-3xl font-bold sm:text-4xl">
+              Busca por Acordes
+            </h2>
+
             <p className="max-w-sm text-sm text-muted-foreground">
               Escreva ou selecione seus acordes para encontrar músicas
             </p>
+
             <ChevronUp className="size-5 rotate-180 text-muted-foreground" />
           </button>
         )}
@@ -105,6 +145,7 @@ function Home() {
             <span className="flex items-center gap-2 text-sm font-medium">
               <Mic className="size-4" /> Identificação por Áudio
             </span>
+
             <ChevronUp className="size-5 text-muted-foreground" />
           </button>
         ) : mode === "audio" ? (
@@ -116,8 +157,12 @@ function Home() {
               >
                 <ArrowLeft className="size-4" /> Voltar
               </button>
-              <h2 className="truncate font-display text-lg font-semibold">Identificação por Áudio</h2>
+
+              <h2 className="truncate font-display text-lg font-semibold">
+                Identificação por Áudio
+              </h2>
             </header>
+
             <div className="min-h-0 flex-1 overflow-y-auto pt-2">
               <AudioPanel />
             </div>
@@ -131,21 +176,19 @@ function Home() {
               <span className="absolute inset-0 rounded-full bg-emerald/40 animate-mic-pulse" />
               <Mic className="relative size-8 text-accent-foreground" />
             </span>
-            <h2 className="font-display text-3xl font-bold sm:text-4xl">Identificação por Áudio</h2>
+
+            <h2 className="font-display text-3xl font-bold sm:text-4xl">
+              Identificação por Áudio
+            </h2>
+
             <p className="max-w-sm text-sm text-muted-foreground">
               Grave um áudio de 30s tocando seu instrumento
             </p>
+
             <ChevronDown className="size-5 text-muted-foreground" />
           </button>
         )}
       </section>
-
-      {mode === "split" && (
-        <div className="pointer-events-none absolute top-5 left-5 z-10 flex items-center gap-2 rounded-full bg-background/50 px-4 py-2 backdrop-blur-md">
-          <Music className="size-4 text-emerald" />
-          <span className="font-display text-sm font-semibold tracking-tight">HarmoniQ</span>
-        </div>
-      )}
     </main>
   );
 }
