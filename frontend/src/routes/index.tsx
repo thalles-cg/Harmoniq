@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { ManualPanel } from "@/components/harmoniq/ManualPanel";
 import { AudioPanel } from "@/components/harmoniq/AudioPanel";
+import { buscarUsuarioAutenticado, logout } from "@/services/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -42,9 +43,13 @@ function Home() {
   const [autenticado, setAutenticado] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    async function verificarAutenticacao() {
+      const usuario = await buscarUsuarioAutenticado();
 
-    setAutenticado(token !== null);
+      setAutenticado(usuario !== null);
+    }
+
+    verificarAutenticacao();
   }, []);
 
   const manualClass =
@@ -79,7 +84,7 @@ function Home() {
         {autenticado ? (
           <button
             onClick={() => {
-              localStorage.removeItem("access_token");
+              logout();
               setAutenticado(false);
             }}
             className="pointer-events-auto flex items-center gap-2 rounded-full bg-background/50 px-4 py-2 text-sm font-medium backdrop-blur-md transition-colors hover:bg-background/70"
