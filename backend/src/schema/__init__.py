@@ -2,6 +2,7 @@ from .acorde import AcordeBase, AcordeCreate, AcordeResponse, AcordeUpdate
 from .artista import ArtistaBase, ArtistaCreate, ArtistaResponse
 from .musica import MusicaBase, MusicaCreate, MusicaResponse, MusicaUpdate
 from .nota import NotaBase, NotaCreate, NotaResponse, NotaUpdate
+from .usuario import UsuarioBase, UsuarioCreate, UsuarioResponse
 
 __all__ = [
   "AcordeBase",
@@ -19,4 +20,7 @@ __all__ = [
   "NotaResponse",
   "NotaUpdate",
   "AcordeUpdate",
+  "UsuarioBase",
+  "UsuarioCreate",
+  "UsuarioResponse",
 ]
