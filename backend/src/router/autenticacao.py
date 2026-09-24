@@ -8,20 +8,16 @@ router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
 @router.post("/login")
 def login(dados: LoginRequest, db: Session = Depends(get_db)):
-  usuario = controller.autenticar(
+  resultado = controller.autenticar(
     db,
     dados.email,
     dados.senha
   )
 
-  if usuario is None:
+  if resultado is None:
     raise HTTPException(
       status_code=status.HTTP_401_UNAUTHORIZED,
       detail="E-mail ou senha inválidos"
     )
 
-  return {
-    "id": usuario.id,
-    "nome": usuario.nome,
-    "email": usuario.email
-  }
+  return resultado
