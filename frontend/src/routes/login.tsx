@@ -167,6 +167,16 @@ function Login() {
               </button>
             </div>
           </form>
+
+          <div className="mt-6 text-center text-sm text-muted-foreground">
+            Ainda não tem uma conta?{" "}
+            <Link
+              to="/cadastro"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Criar conta
+            </Link>
+          </div>
         </div>
       </div>
     </main>
