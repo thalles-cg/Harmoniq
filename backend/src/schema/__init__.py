@@ -3,6 +3,7 @@ from .artista import ArtistaBase, ArtistaCreate, ArtistaResponse
 from .musica import MusicaBase, MusicaCreate, MusicaResponse, MusicaUpdate
 from .nota import NotaBase, NotaCreate, NotaResponse, NotaUpdate
 from .usuario import UsuarioBase, UsuarioCreate, UsuarioResponse
+from .autenticacao import LoginRequest
 
 __all__ = [
   "AcordeBase",
@@ -23,4 +24,5 @@ __all__ = [
   "UsuarioBase",
   "UsuarioCreate",
   "UsuarioResponse",
+  "LoginRequest"
 ]
