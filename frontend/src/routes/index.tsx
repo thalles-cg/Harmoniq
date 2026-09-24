@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Keyboard,
@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Music,
   LogIn,
+  LogOut,
 } from "lucide-react";
 import { ManualPanel } from "@/components/harmoniq/ManualPanel";
 import { AudioPanel } from "@/components/harmoniq/AudioPanel";
@@ -38,6 +39,13 @@ type Mode = "split" | "manual" | "audio";
 
 function Home() {
   const [mode, setMode] = useState<Mode>("split");
+  const [autenticado, setAutenticado] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+
+    setAutenticado(token !== null);
+  }, []);
 
   const manualClass =
     mode === "manual"
@@ -68,13 +76,26 @@ function Home() {
           </span>
         </div>
 
-        <Link
-          to="/login"
-          className="pointer-events-auto flex items-center gap-2 rounded-full bg-background/50 px-4 py-2 text-sm font-medium backdrop-blur-md transition-colors hover:bg-background/70"
-        >
-          <LogIn className="size-4" />
-          Entrar
-        </Link>
+        {autenticado ? (
+          <button
+            onClick={() => {
+              localStorage.removeItem("access_token");
+              setAutenticado(false);
+            }}
+            className="pointer-events-auto flex items-center gap-2 rounded-full bg-background/50 px-4 py-2 text-sm font-medium backdrop-blur-md transition-colors hover:bg-background/70"
+          >
+            <LogOut className="size-4" />
+            Sair
+          </button>
+        ) : (
+          <Link
+            to="/login"
+            className="pointer-events-auto flex items-center gap-2 rounded-full bg-background/50 px-4 py-2 text-sm font-medium backdrop-blur-md transition-colors hover:bg-background/70"
+          >
+            <LogIn className="size-4" />
+            Entrar
+          </Link>
+        )}
       </header>
 
       {/* Manual section */}
