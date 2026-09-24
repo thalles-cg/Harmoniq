@@ -19,3 +19,6 @@ def criar_usuario(db: Session, dados: UsuarioCreate) -> Usuario:
   db.refresh(usuario)
 
   return usuario
+
+def buscar_por_id(db: Session, usuario_id: int) -> Usuario | None:
+  return db.get(Usuario, usuario_id)
