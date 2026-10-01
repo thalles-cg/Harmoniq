@@ -17,6 +17,7 @@ def _montar_resposta(acorde: Acorde) -> AcordeResponse:
     nome_cifra=acorde.nome_cifra,
     nome_extenso=acorde.nome_extenso,
     nota_fundamental_id=acorde.nota_fundamental_id,
+    nota_fundamental=acorde.nota_fundamental.nome,
     qualidade=acorde.qualidade,
     notas=[relacao.nota_id for relacao in acorde.notas],
   )
