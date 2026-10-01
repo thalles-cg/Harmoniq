@@ -1,13 +1,22 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, X, Sparkles, ListOrdered, LayoutGrid } from "lucide-react";
 import { SongResults, type Song } from "./SongResults";
 
-const ROOTS = ["C", "D", "E", "F", "G", "A", "B"];
-const MODIFIERS = ["", "m", "7", "maj7"];
+type Acorde = {
+  id: number;
+  nome_cifra: string;
+  nome_extenso: string;
+  nota_fundamental_id: number;
+  nota_fundamental: string;
+  qualidade: string;
+  notas: number[];
+};
 
 const API_URL = import.meta.env["VITE_API_URL"];
 
 export function ManualPanel() {
+  const [acordes, setAcordes] = useState<Acorde[]>([]);
+
   const [mode, setMode] = useState<"exact" | "repertoire">("exact");
   const [query, setQuery] = useState("");
 
@@ -22,14 +31,38 @@ export function ManualPanel() {
 
   const [capo, setCapo] = useState(true);
 
-  const visibleRoots = useMemo(
-    () =>
-      ROOTS.filter((r) =>
-        r
-          .toLowerCase()
-          .startsWith(query.trim().toLowerCase().slice(0, 1)),
-      ),
-    [query],
+  useEffect(() => {
+    async function carregarAcordes() {
+      try {
+        const response = await fetch(`${API_URL}/acordes/`);
+
+        if (!response.ok) {
+          throw new Error("Erro ao buscar acordes.");
+        }
+
+        const data: Acorde[] = await response.json();
+
+        setAcordes(data);
+      } catch (error) {
+        console.error("Erro ao carregar acordes:", error);
+      }
+    }
+
+    carregarAcordes();
+  }, []);
+
+  const acordesPorFundamental = acordes.reduce<Record<string, Acorde[]>>(
+    (grupos, acorde) => {
+      const fundamental = acorde.nota_fundamental;
+
+      const grupo = grupos[fundamental] ?? [];
+
+      grupo.push(acorde);
+      grupos[fundamental] = grupo;
+
+      return grupos;
+    },
+    {},
   );
 
   const chords = mode === "exact" ? exactChords : repertoireChords;
@@ -147,31 +180,30 @@ export function ManualPanel() {
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-          {(visibleRoots.length ? visibleRoots : ROOTS).map((root) => (
-            <div
-              key={root}
-              className="rounded-xl border border-border bg-background/40 p-2"
-            >
-              <button
-                onClick={() => addChord(root)}
-                className="w-full rounded-lg bg-secondary py-2 font-display text-lg font-semibold transition-colors hover:bg-[image:var(--gradient-manual)] hover:text-primary-foreground"
+          {Object.entries(acordesPorFundamental).map(
+            ([fundamental, acordesDaFundamental]) => (
+              <div
+                key={fundamental}
+                className="rounded-xl border border-border bg-background/40 p-2"
               >
-                {root}
-              </button>
+                <div className="rounded-lg bg-secondary py-2 text-center font-display text-lg font-semibold">
+                  {fundamental}
+                </div>
 
-              <div className="mt-2 grid grid-cols-3 gap-1">
-                {MODIFIERS.slice(1).map((mod) => (
-                  <button
-                    key={mod}
-                    onClick={() => addChord(root + mod)}
-                    className="rounded-md bg-muted py-1 text-[11px] text-muted-foreground transition-colors hover:bg-violet/30 hover:text-foreground"
-                  >
-                    {mod}
-                  </button>
-                ))}
+                <div className="mt-2 grid grid-cols-3 gap-1">
+                  {acordesDaFundamental.map((acorde) => (
+                    <button
+                      key={acorde.id}
+                      onClick={() => addChord(acorde.nome_cifra)}
+                      className="rounded-md bg-muted py-1 text-[11px] text-muted-foreground transition-colors hover:bg-violet/30 hover:text-foreground"
+                    >
+                      {acorde.qualidade}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ),
+          )}
         </div>
 
         <div>
