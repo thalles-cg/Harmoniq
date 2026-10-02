@@ -43,3 +43,36 @@ def ler_eventos_basic_pitch(db: Session, caminho_csv: str) -> list[EventoNota]:
       )
 
   return sorted(eventos, key=lambda evento: evento.inicio)
+
+def consolidar_eventos_nota(eventos: list[EventoNota]) -> list[EventoNota]:
+  """
+  Consolida eventos sobrepostos ou consecutivos da mesma nota
+  em um único intervalo de tempo.
+  """
+
+  eventos_por_nota: dict[int, list[EventoNota]] = {}
+
+  for evento in eventos:
+    eventos_por_nota.setdefault(evento.nota.id, []).append(evento)
+
+  eventos_consolidados: list[EventoNota] = []
+
+  for eventos_nota in eventos_por_nota.values():
+    eventos_nota.sort(key=lambda evento: evento.inicio)
+
+    atual = eventos_nota[0]
+
+    for proximo in eventos_nota[1:]:
+      if proximo.inicio <= atual.fim:
+        atual = EventoNota(
+          nota=atual.nota,
+          inicio=atual.inicio,
+          fim=max(atual.fim, proximo.fim),
+        )
+      else:
+        eventos_consolidados.append(atual)
+        atual = proximo
+
+    eventos_consolidados.append(atual)
+
+  return sorted(eventos_consolidados, key=lambda evento: evento.inicio)
