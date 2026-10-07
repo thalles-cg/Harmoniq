@@ -1,5 +1,5 @@
 from src.database import SessionLocal
-from src.service.transcricao import (ler_eventos_basic_pitch, consolidar_eventos_nota)
+from src.service.transcricao import (ler_eventos_basic_pitch, consolidar_eventos_nota, identificar_regioes_notas)
 
 db = SessionLocal()
 
@@ -10,13 +10,19 @@ try:
   )
 
   eventos_consolidados = consolidar_eventos_nota(eventos)
+  regioes = identificar_regioes_notas(eventos_consolidados)
 
-  for evento in eventos_consolidados:
-    print(
-      f"{evento.inicio:5.2f}s -"
-      f"{evento.fim:5.2f}s | "
-      f"{evento.nota.nome} | "
-      f"{evento.fim - evento.inicio:5.2f}s"
+  for regiao in regioes:
+    notas = ", ".join(
+      nota.nome
+      for nota in regiao.notas
     )
+
+    print(
+      f"{regiao.inicio:5.2f}s - "
+      f"{regiao.fim:5.2f}s | "
+      f"{notas}"
+    )
+    
 finally:
   db.close()
