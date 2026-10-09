@@ -208,7 +208,7 @@ function Home() {
             </h2>
 
             <p className="max-w-sm text-sm text-muted-foreground">
-              Grave um áudio de 30s tocando seu instrumento
+              Grave um áudio de 30s tocando um instrumento
             </p>
 
             <ChevronDown className="size-5 text-muted-foreground" />

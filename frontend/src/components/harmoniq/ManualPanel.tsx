@@ -18,7 +18,6 @@ export function ManualPanel() {
   const [acordes, setAcordes] = useState<Acorde[]>([]);
 
   const [mode, setMode] = useState<"exact" | "repertoire">("exact");
-  const [query, setQuery] = useState("");
 
   const [exactChords, setExactChords] = useState<string[]>(["C", "G", "Am", "F",]);
   const [repertoireChords, setRepertoireChords] = useState<string[]>([]);
@@ -162,23 +161,6 @@ export function ManualPanel() {
       </p>
 
       <div className="glass space-y-5 rounded-2xl p-5">
-        <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && query.trim()) {
-                addChord(query.trim());
-                setQuery("");
-              }
-            }}
-            placeholder="Digite um acorde (ex: Am7) e pressione Enter"
-            className="w-full rounded-xl border border-border bg-background/60 py-3 pr-3 pl-9 text-sm outline-none focus:border-violet focus:ring-2 focus:ring-ring/40"
-          />
-        </div>
-
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
           {Object.entries(acordesPorFundamental).map(
             ([fundamental, acordesDaFundamental]) => (
@@ -270,5 +252,3 @@ export function ManualPanel() {
     </div>
   );
 }
-
-
