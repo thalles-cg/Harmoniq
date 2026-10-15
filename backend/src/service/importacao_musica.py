@@ -5,16 +5,24 @@ from src.model import (
   Musica,
   MusicaAcorde,
   MusicaArtista,
+  MusicaInterrupcao,
 )
 
-def importar_musica(db: Session, titulo: str, artista_nome: str, acordes: list[str]):
+def importar_musica(
+  db: Session,
+  titulo: str,
+  artista_nome: str,
+  acordes_posicionados: list[tuple[int, str]],
+  interrupcoes: list[int] | None = None,
+):
   titulo = titulo.strip()
   artista_nome = artista_nome.strip()
+  interrupcoes = interrupcoes or []
 
   if not titulo or not artista_nome:
     raise ValueError("Título e artista são obrigatórios.")
 
-  if not acordes:
+  if not acordes_posicionados:
     raise ValueError("Informe pelo menos um acorde.")
 
   acordes_banco = {
@@ -23,8 +31,9 @@ def importar_musica(db: Session, titulo: str, artista_nome: str, acordes: list[s
   }
 
   acordes_invalidos = sorted({
-    nome for nome in acordes
-    if nome not in acordes_banco
+    nome_acorde
+    for _, nome_acorde in acordes_posicionados
+    if nome_acorde not in acordes_banco
   })
 
   if acordes_invalidos:
@@ -72,12 +81,20 @@ def importar_musica(db: Session, titulo: str, artista_nome: str, acordes: list[s
       )
     )
 
-    for posicao, nome_acorde in enumerate(acordes, start=1):
+    for posicao, nome_acorde in acordes_posicionados:
       db.add(
         MusicaAcorde(
           musica_id=musica.id,
           posicao=posicao,
           acorde_id=acordes_banco[nome_acorde].id,
+        )
+      )
+
+    for posicao in interrupcoes:
+      db.add(
+        MusicaInterrupcao(
+          musica_id=musica.id,
+          posicao=posicao,
         )
       )
 

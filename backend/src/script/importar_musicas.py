@@ -19,11 +19,19 @@ def ler_cifra():
 
   return "\n".join(linhas)
 
-def revisar_acordes(acordes):
+def revisar_acordes(acordes_posicionados, interrupcoes):
+  acordes = [acorde for _, acorde in acordes_posicionados]
+
   while True:
     print("\n=== Progressão identificada ===")
     print(" ".join(acordes))
     print(f"\nTotal: {len(acordes)} acordes")
+
+    if interrupcoes:
+      print(
+        "\nAtenção: existem posições de acordes não reconhecidos: "
+        + ", ".join(map(str, interrupcoes))
+      )
 
     print("\n1 - Confirmar progressão")
     print("2 - Editar progressão")
@@ -32,10 +40,12 @@ def revisar_acordes(acordes):
     opcao = input("\nEscolha: ").strip()
 
     if opcao == "1":
-      return acordes
+      return acordes_posicionados, interrupcoes
 
-    if opcao == "2":
-      entrada = input("\nDigite a sequência corrigida: ").strip()
+    elif opcao == "2":
+      entrada = input(
+        "\nDigite a sequência corrigida, separando os acordes por espaços: "
+      ).strip()
 
       novos_acordes = []
       invalidos = []
@@ -59,7 +69,16 @@ def revisar_acordes(acordes):
         print("\nA progressão não pode ficar vazia.")
         continue
 
+      acordes_posicionados = [
+        (posicao, acorde)
+        for posicao, acorde in enumerate(
+          novos_acordes,
+          start=1,
+        )
+      ]
+
       acordes = novos_acordes
+      interrupcoes = []
 
     elif opcao == "3":
       return None
@@ -84,6 +103,7 @@ def main():
 
   if opcao == "1":
     entrada = input("\nAcordes separados por espaços: ")
+
     acordes = []
     invalidos = []
 
@@ -102,35 +122,54 @@ def main():
       )
       return
 
+    if not acordes:
+      print("\nInforme pelo menos um acorde.")
+      return
+
+    acordes_posicionados = [
+      (posicao, acorde)
+      for posicao, acorde in enumerate(acordes, start=1)
+    ]
+    interrupcoes = []
+
   elif opcao == "2":
     texto = ler_cifra()
     resultado = extrair_acordes(texto)
 
     acordes = resultado.acordes
+    acordes_posicionados = resultado.acordes_posicionados
+    interrupcoes = resultado.interrupcoes
 
     if resultado.avisos:
-        print("\n=== Avisos da extração ===")
+      print("\n=== Avisos da extração ===")
 
-        for aviso in resultado.avisos:
-            print(f"- {aviso}")
+      for aviso in resultado.avisos:
+        print(f"- {aviso}")
 
-        print(
-            "\nRevise a progressão antes de confirmar, "
-            "pois algumas linhas foram ignoradas."
-        )
-    else:
-        print("\nOpção inválida.")
-        return
+      print(
+        "\nRevise a progressão antes de confirmar, "
+        "pois alguns elementos não foram reconhecidos."
+      )
 
     if not acordes:
         print("\nNenhum acorde foi identificado.")
         return
 
-  acordes = revisar_acordes(acordes)
+  else:
+    print("\nOpção inválida.")
+    return
 
-  if acordes is None:
+  revisao = revisar_acordes(
+    acordes_posicionados,
+    interrupcoes,
+  )
+
+  if revisao is None:
     print("\nImportação cancelada.")
     return
+
+  acordes_posicionados, interrupcoes = revisao
+  acordes = [acorde for _, acorde in acordes_posicionados]
 
   db = SessionLocal()
 
@@ -139,7 +178,8 @@ def main():
       db=db,
       titulo=titulo,
       artista_nome=artista,
-      acordes=acordes,
+      acordes_posicionados=acordes_posicionados,
+      interrupcoes=interrupcoes,
     )
 
     print("\nMúsica cadastrada com sucesso!")
@@ -147,6 +187,7 @@ def main():
     print(f"Título: {musica.titulo}")
     print(f"Artista: {artista}")
     print(f"Total de acordes: {len(acordes)}")
+    print(f"Total de interrupções: {len(interrupcoes)}")
 
   except ValueError as erro:
     print(f"\nErro: {erro}")

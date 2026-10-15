@@ -15,4 +15,5 @@ class Musica(Base):
   artistas: Mapped[list["MusicaArtista"]] = relationship(back_populates="musica")
   generos: Mapped[list["MusicaGenero"]] = relationship(back_populates="musica")
   acordes: Mapped[list["MusicaAcorde"]] = relationship(back_populates="musica")
+  interrupcoes: Mapped[list["MusicaInterrupcao"]] = relationship(back_populates="musica")
   favoritos: Mapped[list["Favorito"]] = relationship(back_populates="musica")
