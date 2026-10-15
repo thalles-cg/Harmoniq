@@ -104,15 +104,27 @@ def main():
 
   elif opcao == "2":
     texto = ler_cifra()
-    acordes = extrair_acordes(texto)
+    resultado = extrair_acordes(texto)
 
-  else:
-    print("\nOpção inválida.")
-    return
+    acordes = resultado.acordes
 
-  if not acordes:
-    print("\nNenhum acorde foi identificado.")
-    return
+    if resultado.avisos:
+        print("\n=== Avisos da extração ===")
+
+        for aviso in resultado.avisos:
+            print(f"- {aviso}")
+
+        print(
+            "\nRevise a progressão antes de confirmar, "
+            "pois algumas linhas foram ignoradas."
+        )
+    else:
+        print("\nOpção inválida.")
+        return
+
+    if not acordes:
+        print("\nNenhum acorde foi identificado.")
+        return
 
   acordes = revisar_acordes(acordes)
 
