@@ -26,405 +26,182 @@ def seed_notas(db: Session):
 
   db.commit()
 
+
 def seed_acordes(db: Session):
+  # Qualidades utilizadas pelo vocabulário expandido do BTC.
+  # Os números representam intervalos em semitons.
+  qualidades = {
+    "min": {
+      "sufixo": "m",
+      "descricao": "Menor",
+      "intervalos": [0, 3, 7],
+    },
+    "maj": {
+      "sufixo": "",
+      "descricao": "Maior",
+      "intervalos": [0, 4, 7],
+    },
+    "dim": {
+      "sufixo": "dim",
+      "descricao": "Diminuto",
+      "intervalos": [0, 3, 6],
+    },
+    "aug": {
+      "sufixo": "aug",
+      "descricao": "Aumentado",
+      "intervalos": [0, 4, 8],
+    },
+    "min6": {
+      "sufixo": "m6",
+      "descricao": "Menor com Sexta",
+      "intervalos": [0, 3, 7, 9],
+    },
+    "maj6": {
+      "sufixo": "6",
+      "descricao": "Maior com Sexta",
+      "intervalos": [0, 4, 7, 9],
+    },
+    "min7": {
+      "sufixo": "m7",
+      "descricao": "Menor com Sétima",
+      "intervalos": [0, 3, 7, 10],
+    },
+    "minmaj7": {
+      "sufixo": "m(maj7)",
+      "descricao": "Menor com Sétima Maior",
+      "intervalos": [0, 3, 7, 11],
+    },
+    "maj7": {
+      "sufixo": "maj7",
+      "descricao": "Maior com Sétima Maior",
+      "intervalos": [0, 4, 7, 11],
+    },
+    "7": {
+      "sufixo": "7",
+      "descricao": "Maior com Sétima Menor",
+      "intervalos": [0, 4, 7, 10],
+    },
+    "dim7": {
+      "sufixo": "dim7",
+      "descricao": "Sétima Diminuta",
+      "intervalos": [0, 3, 6, 9],
+    },
+    "hdim7": {
+      "sufixo": "m7(b5)",
+      "descricao": "Meio-Diminuto",
+      "intervalos": [0, 3, 6, 10],
+    },
+    "sus2": {
+      "sufixo": "sus2",
+      "descricao": "Segunda Suspensa",
+      "intervalos": [0, 2, 7],
+    },
+    "sus4": {
+      "sufixo": "sus4",
+      "descricao": "Quarta Suspensa",
+      "intervalos": [0, 5, 7],
+    },
+  }
+
+  nomes_notas = {
+    "C": "Dó",
+    "C#": "Dó Sustenido",
+    "D": "Ré",
+    "D#": "Ré Sustenido",
+    "E": "Mi",
+    "F": "Fá",
+    "F#": "Fá Sustenido",
+    "G": "Sol",
+    "G#": "Sol Sustenido",
+    "A": "Lá",
+    "A#": "Lá Sustenido",
+    "B": "Si",
+  }
+
   notas = {
     nota.nome: nota
     for nota in db.query(Nota).all()
   }
 
-  acordes = [
-      # C
-    {
-    "nome_cifra": "C",
-    "nome_extenso": "Dó Maior",
-    "nota_fundamental": "C",
-    "qualidade": "M",
-    "notas": ["C", "E", "G"],
-    },
-    {
-      "nome_cifra": "Cm",
-      "nome_extenso": "Dó Menor",
-      "nota_fundamental": "C",
-      "qualidade": "m",
-      "notas": ["C", "D#", "G"],
-    },
-    {
-      "nome_cifra": "C7",
-      "nome_extenso": "Dó com Sétima",
-      "nota_fundamental": "C",
-      "qualidade": "7",
-      "notas": ["C", "E", "G", "A#"],
-    },
-    {
-      "nome_cifra": "Cm7",
-      "nome_extenso": "Dó Menor com Sétima",
-      "nota_fundamental": "C",
-      "qualidade": "m7",
-      "notas": ["C", "D#", "G", "A#"],
-    },
+  acordes_existentes = {
+    acorde.nome_cifra: acorde
+    for acorde in db.query(Acorde).all()
+  }
 
-    # C#
-    {
-      "nome_cifra": "C#",
-      "nome_extenso": "Dó Sustenido Maior",
-      "nota_fundamental": "C#",
-      "qualidade": "M",
-      "notas": ["C#", "F", "G#"],
-    },
-    {
-      "nome_cifra": "C#m",
-      "nome_extenso": "Dó Sustenido Menor",
-      "nota_fundamental": "C#",
-      "qualidade": "m",
-      "notas": ["C#", "E", "G#"],
-    },
-    {
-      "nome_cifra": "C#7",
-      "nome_extenso": "Dó Sustenido com Sétima",
-      "nota_fundamental": "C#",
-      "qualidade": "7",
-      "notas": ["C#", "F", "G#", "B"],
-    },
-    {
-      "nome_cifra": "C#m7",
-      "nome_extenso": "Dó Sustenido Menor com Sétima",
-      "nota_fundamental": "C#",
-      "qualidade": "m7",
-      "notas": ["C#", "E", "G#", "B"],
-    },
-
-    # D
-    {
-      "nome_cifra": "D",
-      "nome_extenso": "Ré Maior",
-      "nota_fundamental": "D",
-      "qualidade": "M",
-      "notas": ["D", "F#", "A"],
-    },
-    {
-      "nome_cifra": "Dm",
-      "nome_extenso": "Ré Menor",
-      "nota_fundamental": "D",
-      "qualidade": "m",
-      "notas": ["D", "F", "A"],
-    },
-    {
-      "nome_cifra": "D7",
-      "nome_extenso": "Ré com Sétima",
-      "nota_fundamental": "D",
-      "qualidade": "7",
-      "notas": ["D", "F#", "A", "C"],
-    },
-    {
-      "nome_cifra": "Dm7",
-      "nome_extenso": "Ré Menor com Sétima",
-      "nota_fundamental": "D",
-      "qualidade": "m7",
-      "notas": ["D", "F", "A", "C"],
-    },
-
-    # D#
-    {
-      "nome_cifra": "D#",
-      "nome_extenso": "Ré Sustenido Maior",
-      "nota_fundamental": "D#",
-      "qualidade": "M",
-      "notas": ["D#", "G", "A#"],
-    },
-    {
-      "nome_cifra": "D#m",
-      "nome_extenso": "Ré Sustenido Menor",
-      "nota_fundamental": "D#",
-      "qualidade": "m",
-      "notas": ["D#", "F#", "A#"],
-    },
-    {
-      "nome_cifra": "D#7",
-      "nome_extenso": "Ré Sustenido com Sétima",
-      "nota_fundamental": "D#",
-      "qualidade": "7",
-      "notas": ["D#", "G", "A#", "C#"],
-    },
-    {
-      "nome_cifra": "D#m7",
-      "nome_extenso": "Ré Sustenido Menor com Sétima",
-      "nota_fundamental": "D#",
-      "qualidade": "m7",
-      "notas": ["D#", "F#", "A#", "C#"],
-    },
-
-    # E
-    {
-      "nome_cifra": "E",
-      "nome_extenso": "Mi Maior",
-      "nota_fundamental": "E",
-      "qualidade": "M",
-      "notas": ["E", "G#", "B"],
-    },
-    {
-      "nome_cifra": "Em",
-      "nome_extenso": "Mi Menor",
-      "nota_fundamental": "E",
-      "qualidade": "m",
-      "notas": ["E", "G", "B"],
-    },
-    {
-      "nome_cifra": "E7",
-      "nome_extenso": "Mi com Sétima",
-      "nota_fundamental": "E",
-      "qualidade": "7",
-      "notas": ["E", "G#", "B", "D"],
-    },
-    {
-      "nome_cifra": "Em7",
-      "nome_extenso": "Mi Menor com Sétima",
-      "nota_fundamental": "E",
-      "qualidade": "m7",
-      "notas": ["E", "G", "B", "D"],
-    },
-
-    # F
-    {
-      "nome_cifra": "F",
-      "nome_extenso": "Fá Maior",
-      "nota_fundamental": "F",
-      "qualidade": "M",
-      "notas": ["F", "A", "C"],
-    },
-    {
-      "nome_cifra": "Fm",
-      "nome_extenso": "Fá Menor",
-      "nota_fundamental": "F",
-      "qualidade": "m",
-      "notas": ["F", "G#", "C"],
-    },
-    {
-      "nome_cifra": "F7",
-      "nome_extenso": "Fá com Sétima",
-      "nota_fundamental": "F",
-      "qualidade": "7",
-      "notas": ["F", "A", "C", "D#"],
-    },
-    {
-      "nome_cifra": "Fm7",
-      "nome_extenso": "Fá Menor com Sétima",
-      "nota_fundamental": "F",
-      "qualidade": "m7",
-      "notas": ["F", "G#", "C", "D#"],
-    },
-
-    # F#
-    {
-      "nome_cifra": "F#",
-      "nome_extenso": "Fá Sustenido Maior",
-      "nota_fundamental": "F#",
-      "qualidade": "M",
-      "notas": ["F#", "A#", "C#"],
-    },
-    {
-      "nome_cifra": "F#m",
-      "nome_extenso": "Fá Sustenido Menor",
-      "nota_fundamental": "F#",
-      "qualidade": "m",
-      "notas": ["F#", "A", "C#"],
-    },
-    {
-      "nome_cifra": "F#7",
-      "nome_extenso": "Fá Sustenido com Sétima",
-      "nota_fundamental": "F#",
-      "qualidade": "7",
-      "notas": ["F#", "A#", "C#", "E"],
-    },
-    {
-      "nome_cifra": "F#m7",
-      "nome_extenso": "Fá Sustenido Menor com Sétima",
-      "nota_fundamental": "F#",
-      "qualidade": "m7",
-      "notas": ["F#", "A", "C#", "E"],
-    },
-
-    # G
-    {
-      "nome_cifra": "G",
-      "nome_extenso": "Sol Maior",
-      "nota_fundamental": "G",
-      "qualidade": "M",
-      "notas": ["G", "B", "D"],
-    },
-    {
-      "nome_cifra": "Gm",
-      "nome_extenso": "Sol Menor",
-      "nota_fundamental": "G",
-      "qualidade": "m",
-      "notas": ["G", "A#", "D"],
-    },
-    {
-      "nome_cifra": "G7",
-      "nome_extenso": "Sol com Sétima",
-      "nota_fundamental": "G",
-      "qualidade": "7",
-      "notas": ["G", "B", "D", "F"],
-    },
-    {
-      "nome_cifra": "Gm7",
-      "nome_extenso": "Sol Menor com Sétima",
-      "nota_fundamental": "G",
-      "qualidade": "m7",
-      "notas": ["G", "A#", "D", "F"],
-    },
-
-    # G#
-    {
-      "nome_cifra": "G#",
-      "nome_extenso": "Sol Sustenido Maior",
-      "nota_fundamental": "G#",
-      "qualidade": "M",
-      "notas": ["G#", "C", "D#"],
-    },
-    {
-      "nome_cifra": "G#m",
-      "nome_extenso": "Sol Sustenido Menor",
-      "nota_fundamental": "G#",
-      "qualidade": "m",
-      "notas": ["G#", "B", "D#"],
-    },
-    {
-      "nome_cifra": "G#7",
-      "nome_extenso": "Sol Sustenido com Sétima",
-      "nota_fundamental": "G#",
-      "qualidade": "7",
-      "notas": ["G#", "C", "D#", "F#"],
-    },
-    {
-      "nome_cifra": "G#m7",
-      "nome_extenso": "Sol Sustenido Menor com Sétima",
-      "nota_fundamental": "G#",
-      "qualidade": "m7",
-      "notas": ["G#", "B", "D#", "F#"],
-    },
-
-    # A
-    {
-      "nome_cifra": "A",
-      "nome_extenso": "Lá Maior",
-      "nota_fundamental": "A",
-      "qualidade": "M",
-      "notas": ["A", "C#", "E"],
-    },
-    {
-      "nome_cifra": "Am",
-      "nome_extenso": "Lá Menor",
-      "nota_fundamental": "A",
-      "qualidade": "m",
-      "notas": ["A", "C", "E"],
-    },
-    {
-      "nome_cifra": "A7",
-      "nome_extenso": "Lá com Sétima",
-      "nota_fundamental": "A",
-      "qualidade": "7",
-      "notas": ["A", "C#", "E", "G"],
-    },
-    {
-      "nome_cifra": "Am7",
-      "nome_extenso": "Lá Menor com Sétima",
-      "nota_fundamental": "A",
-      "qualidade": "m7",
-      "notas": ["A", "C", "E", "G"],
-    },
-
-    # A#
-    {
-      "nome_cifra": "A#",
-      "nome_extenso": "Lá Sustenido Maior",
-      "nota_fundamental": "A#",
-      "qualidade": "M",
-      "notas": ["A#", "D", "F"],
-    },
-    {
-      "nome_cifra": "A#m",
-      "nome_extenso": "Lá Sustenido Menor",
-      "nota_fundamental": "A#",
-      "qualidade": "m",
-      "notas": ["A#", "C#", "F"],
-    },
-    {
-      "nome_cifra": "A#7",
-      "nome_extenso": "Lá Sustenido com Sétima",
-      "nota_fundamental": "A#",
-      "qualidade": "7",
-      "notas": ["A#", "D", "F", "G#"],
-    },
-    {
-      "nome_cifra": "A#m7",
-      "nome_extenso": "Lá Sustenido Menor com Sétima",
-      "nota_fundamental": "A#",
-      "qualidade": "m7",
-      "notas": ["A#", "C#", "F", "G#"],
-    },
-
-    # B
-    {
-      "nome_cifra": "B",
-      "nome_extenso": "Si Maior",
-      "nota_fundamental": "B",
-      "qualidade": "M",
-      "notas": ["B", "D#", "F#"],
-    },
-    {
-      "nome_cifra": "Bm",
-      "nome_extenso": "Si Menor",
-      "nota_fundamental": "B",
-      "qualidade": "m",
-      "notas": ["B", "D", "F#"],
-    },
-    {
-      "nome_cifra": "B7",
-      "nome_extenso": "Si com Sétima",
-      "nota_fundamental": "B",
-      "qualidade": "7",
-      "notas": ["B", "D#", "F#", "A"],
-    },
-    {
-      "nome_cifra": "Bm7",
-      "nome_extenso": "Si Menor com Sétima",
-      "nota_fundamental": "B",
-      "qualidade": "m7",
-      "notas": ["B", "D", "F#", "A"],
-    },
-  ]
-
-  for dados in acordes:
-    acorde_existente = (
-      db.query(Acorde)
-      .filter(Acorde.nome_cifra == dados["nome_cifra"])
-      .first()
+  if len(notas) != 12:
+    raise ValueError(
+      "É necessário cadastrar as 12 notas antes dos acordes."
     )
 
-    if acorde_existente is not None:
-      continue
+  try:
+    for nome_fundamental, nome_extenso in nomes_notas.items():
+      fundamental = notas[nome_fundamental]
 
-    nota_fundamental = notas[dados["nota_fundamental"]]
+      for qualidade, dados in qualidades.items():
+        nome_cifra = nome_fundamental + dados["sufixo"]
 
-    acorde = Acorde(
-      nome_cifra=dados["nome_cifra"],
-      nome_extenso=dados["nome_extenso"],
-      nota_fundamental_id=nota_fundamental.id,
-      qualidade=dados["qualidade"],
-    )
+        acorde = acordes_existentes.get(nome_cifra)
 
-    db.add(acorde)
-    db.flush()
+        if acorde is None:
+          acorde = Acorde(
+            nome_cifra=nome_cifra,
+            nome_extenso=f"{nome_extenso} {dados['descricao']}",
+            nota_fundamental_id=fundamental.id,
+            qualidade=qualidade,
+          )
 
-    for nome_nota in dados["notas"]:
-      db.add(
-        AcordeNota(
-          acorde_id=acorde.id,
-          nota_id=notas[nome_nota].id,
-        )
-      )
+          db.add(acorde)
+          db.flush()
 
-  db.commit()
+          acordes_existentes[nome_cifra] = acorde
+
+        else:
+          acorde.qualidade = qualidade
+          acorde.nome_extenso = (
+            f"{nome_extenso} {dados['descricao']}"
+          )
+          acorde.nota_fundamental_id = fundamental.id
+
+        pitch_classes = {
+          (fundamental.pitch_class + intervalo) % 12
+          for intervalo in dados["intervalos"]
+        }
+
+        notas_acorde = [
+          nota
+          for nota in notas.values()
+          if nota.pitch_class in pitch_classes
+        ]
+
+        notas_atuais = {
+          relacao.nota_id: relacao
+          for relacao in db.query(AcordeNota)
+            .filter(AcordeNota.acorde_id == acorde.id)
+            .all()
+        }
+
+        ids_esperados = {
+          nota.id for nota in notas_acorde
+        }
+
+        for nota_id, relacao in notas_atuais.items():
+          if nota_id not in ids_esperados:
+            db.delete(relacao)
+
+        for nota in notas_acorde:
+          if nota.id not in notas_atuais:
+            db.add(
+              AcordeNota(
+                acorde_id=acorde.id,
+                nota_id=nota.id,
+              )
+            )
+
+    db.commit()
+
+  except Exception:
+    db.rollback()
+    raise
 
 def seed_musicas(db: Session):
   acordes = {
