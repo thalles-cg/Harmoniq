@@ -21,6 +21,7 @@ export function ManualPanel() {
 
   const [exactChords, setExactChords] = useState<string[]>(["C", "G", "Am", "F",]);
   const [repertoireChords, setRepertoireChords] = useState<string[]>([]);
+  const [exactSearched, setExactSearched] = useState(false);
 
   const [exactSongs, setExactSongs] = useState<Song[]>([]);
   const [repertoireSongs, setRepertoireSongs] = useState<Song[]>([]);
@@ -83,11 +84,7 @@ export function ManualPanel() {
   };
 
   const handleSearch = async () => {
-    if (mode === "exact") {
-      return;
-    }
-
-    if (repertoireChords.length === 0) {
+    if (chords.length === 0) {
       return;
     }
 
@@ -96,12 +93,17 @@ export function ManualPanel() {
     try {
       const params = new URLSearchParams();
 
-      repertoireChords.forEach((acorde) => {
+      chords.forEach((acorde) => {
         params.append("acordes", acorde);
       });
 
+      const endpoint =
+        mode === "exact"
+          ? "sequencia"
+          : "repertorio";
+
       const response = await fetch(
-        `${API_URL}/musicas/busca/repertorio?${params.toString()}`,
+        `${API_URL}/musicas/busca/${endpoint}?${params.toString()}`,
       );
 
       if (!response.ok) {
@@ -110,8 +112,13 @@ export function ManualPanel() {
 
       const data: Song[] = await response.json();
 
-      setRepertoireSongs(data);
-      setRepertoireSearched(true);
+      if (mode === "exact") {
+        setExactSongs(data);
+        setExactSearched(true);
+      } else {
+        setRepertoireSongs(data);
+        setRepertoireSearched(true);
+      }
     } catch (error) {
       console.error("Erro ao buscar músicas:", error);
     } finally {
@@ -245,6 +252,10 @@ export function ManualPanel() {
           {loading ? "Buscando..." : "Buscar Músicas"}
         </button>
       </div>
+
+      {mode === "exact" && exactSearched && (
+        <SongResults songs={exactSongs} tone="manual" />
+      )}
 
       {mode === "repertoire" && repertoireSearched && (
         <SongResults songs={repertoireSongs} tone="manual" />
