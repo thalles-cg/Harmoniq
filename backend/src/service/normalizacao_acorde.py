@@ -44,18 +44,31 @@ SUFIXOS = {
     "ø7": "m7(b5)",
     "sus2": "sus2",
     "sus4": "sus4",
-
-    # Aliases comuns para acordes suspensos.
     "4": "sus4",
     "2": "sus2",
 }
 
+def remover_baixo_inversao(cifra: str) -> str:
+    """Remove o baixo de uma inversão, sem cortar barras dentro de parênteses."""
+    profundidade = 0
+
+    for indice, caractere in enumerate(cifra):
+        if caractere == "(":
+            profundidade += 1
+        elif caractere == ")":
+            profundidade = max(0, profundidade - 1)
+        elif caractere == "/" and profundidade == 0:
+            return cifra[:indice]
+
+    return cifra
+
+
 def normalizar_acorde(cifra: str) -> str | None:
     cifra = cifra.strip()
-    cifra = cifra.strip(" \t\r\n|,;[]()")
+    cifra = cifra.strip(" \t\r\n|,;[]")
 
-    # Remove o baixo da inversão: C/E -> C.
-    cifra = cifra.split("/")[0]
+    # Exemplos: Fm/C -> Fm; G7(13)/F -> G7(13).
+    cifra = remover_baixo_inversao(cifra)
 
     resultado = re.fullmatch(
         r"([A-G](?:#|b)?)(.*)",
@@ -70,7 +83,45 @@ def normalizar_acorde(cifra: str) -> str | None:
     nota = NOTAS.get(fundamental)
     if nota is None:
         return None
-    
+
+    # Padroniza algumas variações de escrita.
+    sufixo = sufixo.replace("−", "-")
+    sufixo = sufixo.replace("º", "°")
+
+    # Meio diminuto: F#m7(5-) -> F#m7(b5).
+    meio_diminuto = re.fullmatch(
+        r"m7\s*\(\s*5\s*-\s*\)",
+        sufixo,
+        flags=re.IGNORECASE,
+    )
+    if meio_diminuto:
+        return nota + "m7(b5)"
+
+    # Acordes dominantes com extensões:
+    # D7(9), G7(13), A7(13-), C7(4/9) -> acorde-base 7.
+    dominante_estendido = re.fullmatch(
+        r"7\s*\([^()]*\)",
+        sufixo,
+    )
+    if dominante_estendido:
+        return nota + "7"
+
+    # Acordes menores com extensões:
+    # Em7(9) -> Em7; Am7(11) -> Am7.
+    menor_estendido = re.fullmatch(
+        r"m7\s*\([^()]*\)",
+        sufixo,
+    )
+    if menor_estendido:
+        return nota + "m7"
+
+    # Acorde de sétima com quarta suspensa:
+    # E4(7) -> Esus4, a aproximação disponível no catálogo.
+    if re.fullmatch(r"4\s*\(\s*7\s*\)", sufixo):
+        return nota + "sus4"
+
+    # Outras cifras com extensões entre parênteses não são
+    # simplificadas automaticamente.
     qualidade = SUFIXOS.get(sufixo)
 
     if qualidade is None:
