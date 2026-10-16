@@ -7,6 +7,7 @@ from src.service.musica import (
   atualizar_musica,
   buscar_musica,
   buscar_por_repertorio,
+  buscar_por_sequencia,
   criar_musica,
   excluir_musica,
   listar_musicas,
@@ -45,6 +46,15 @@ def buscar_repertorio(db: Session, nomes_acordes: list[str]) -> list[Musica]:
     )
 
   return buscar_por_repertorio(db, nomes_acordes)
+
+def buscar_sequencia(db: Session, nomes_acordes: list[str]) -> list[Musica]:
+  if not nomes_acordes or not any(nome.strip() for nome in nomes_acordes):
+    raise HTTPException(
+      status_code=400,
+      detail="Informe pelo menos um acorde para a sequência."
+    )
+
+  return buscar_por_sequencia(db, nomes_acordes)
 
 def atualizar(db: Session, musica_id: int, dados: MusicaUpdate) -> Musica:
   musica = atualizar_musica(db, musica_id, dados)

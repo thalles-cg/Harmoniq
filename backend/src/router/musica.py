@@ -18,6 +18,10 @@ def listar_musicas(db: Session = Depends(get_db)):
 def buscar_por_repertorio(acordes: list[str] = Query(...), db: Session = Depends(get_db)):
   return controller.buscar_repertorio(db, acordes)
 
+@router.get("/busca/sequencia", response_model=list[MusicaResponse])
+def buscar_por_sequencia(acordes: list[str] = Query(...), db: Session = Depends(get_db)):
+  return controller.buscar_sequencia(db, acordes)
+
 @router.get("/{musica_id}", response_model=MusicaResponse)
 def buscar_musica(musica_id: int, db: Session = Depends(get_db)):
   return controller.buscar(db, musica_id)
