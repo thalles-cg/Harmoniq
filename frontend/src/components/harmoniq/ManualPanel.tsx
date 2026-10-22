@@ -168,34 +168,7 @@ export function ManualPanel() {
       </p>
 
       <div className="glass space-y-5 rounded-2xl p-5">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-          {Object.entries(acordesPorFundamental).map(
-            ([fundamental, acordesDaFundamental]) => (
-              <div
-                key={fundamental}
-                className="rounded-xl border border-border bg-background/40 p-2"
-              >
-                <div className="rounded-lg bg-secondary py-2 text-center font-display text-lg font-semibold">
-                  {fundamental}
-                </div>
-
-                <div className="mt-2 grid grid-cols-3 gap-1">
-                  {acordesDaFundamental.map((acorde) => (
-                    <button
-                      key={acorde.id}
-                      onClick={() => addChord(acorde.nome_cifra)}
-                      className="rounded-md bg-muted py-1 text-[11px] text-muted-foreground transition-colors hover:bg-violet/30 hover:text-foreground"
-                    >
-                      {acorde.qualidade}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ),
-          )}
-        </div>
-
-        <div>
+        <div className="sticky top-0 z-30 rounded-xl border-b border-border bg-[color-mix(in_oklab,var(--card)_85%,var(--background))] p-3 shadow-sm">
           <p className="mb-2 text-xs tracking-wide text-muted-foreground uppercase">
             {mode === "exact" ? "Sequência selecionada" : "Meus acordes"}
           </p>
@@ -223,6 +196,34 @@ export function ManualPanel() {
               </span>
             ))}
           </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {Object.entries(acordesPorFundamental).map(
+            ([fundamental, acordesDaFundamental]) => (
+              <div
+                key={fundamental}
+                className="rounded-xl border border-border bg-background/40 p-2"
+              >
+                <div className="rounded-lg bg-secondary py-2 text-center font-display text-lg font-semibold">
+                  {fundamental}
+                </div>
+
+                <div className="mt-2 grid grid-cols-2 gap-1.5">
+                  {acordesDaFundamental.map((acorde) => (
+                    <button
+                      key={acorde.id}
+                      onClick={() => addChord(acorde.nome_cifra)}
+                      title={`Adicionar ${acorde.nome_cifra}`}
+                      className="min-w-0 rounded-md bg-muted px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-violet/30 hover:text-foreground"
+                    >
+                      {acorde.nome_cifra}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ),
+          )}
         </div>
 
         {/* <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl bg-background/40 px-4 py-3">
