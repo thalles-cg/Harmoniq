@@ -101,6 +101,21 @@ def seed_acordes(db: Session):
       "descricao": "Quarta Suspensa",
       "intervalos": [0, 5, 7],
     },
+    "power": {
+      "sufixo": "5",
+      "descricao": "Quinta (Power Chord)",
+      "intervalos": [0, 7],
+    },
+    "9": {
+      "sufixo": "9",
+      "descricao": "Com Nona Maior",
+      "intervalos": [0, 4, 7, 10, 14],
+    },
+    "min9": {
+      "sufixo": "m9",
+      "descricao": "Menor com Nona",
+      "intervalos": [0, 3, 7, 10, 14], 
+    },
   }
 
   nomes_notas = {
@@ -203,66 +218,12 @@ def seed_acordes(db: Session):
     db.rollback()
     raise
 
-def seed_musicas(db: Session):
-  acordes = {
-    acorde.nome_cifra: acorde
-    for acorde in db.query(Acorde).all()
-  }
-
-  musicas = [
-    {
-      "titulo": "Chega de Saudade",
-      "acordes": ["C", "Am", "Dm", "G7"],
-    },
-    {
-      "titulo": "Garota de Ipanema",
-      "acordes": ["F", "G7", "C7"],
-    },
-    {
-      "titulo": "Desafinado",
-      "acordes": ["F", "G7", "C7"],
-    },
-    {
-      "titulo": "Corcovado",
-      "acordes": ["C", "Am", "Dm", "G7"],
-    },
-  ]
-
-  for dados in musicas:
-    musica_existente = (
-      db.query(Musica)
-      .filter(Musica.titulo == dados["titulo"])
-      .first()
-    )
-
-    if musica_existente is not None:
-      continue
-
-    musica = Musica(
-      titulo=dados["titulo"],
-    )
-
-    db.add(musica)
-    db.flush()
-
-    for posicao, nome_acorde in enumerate(dados["acordes"], start=1):
-      db.add(
-        MusicaAcorde(
-          musica_id=musica.id,
-          posicao=posicao,
-          acorde_id=acordes[nome_acorde].id,
-        )
-      )
-
-  db.commit()
-
 def seed():
   db = SessionLocal()
 
   try:
     seed_notas(db)
     seed_acordes(db)
-    seed_musicas(db)
   finally:
     db.close()
 

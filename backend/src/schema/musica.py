@@ -18,3 +18,8 @@ class MusicaUpdate(BaseModel):
 class MusicaResponse(MusicaBase):
   id: int
   model_config = ConfigDict(from_attributes=True)
+
+class MusicaBuscaSequenciaResponse(BaseModel):
+  musica: MusicaResponse
+  similaridade: float
+  ocorrencias: int

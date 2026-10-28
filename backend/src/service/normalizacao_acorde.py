@@ -46,6 +46,9 @@ SUFIXOS = {
     "sus4": "sus4",
     "4": "sus4",
     "2": "sus2",
+    "5": "5",
+    "9": "9",
+    "m9": "m9"
 }
 
 def remover_baixo_inversao(cifra: str) -> str:
@@ -120,8 +123,12 @@ def normalizar_acorde(cifra: str) -> str | None:
     if re.fullmatch(r"4\s*\(\s*7\s*\)", sufixo):
         return nota + "sus4"
 
+    if re.fullmatch(r"7\s*\(\s*4\s*\)", sufixo):
+        return nota + "7sus4"
     # Outras cifras com extensões entre parênteses não são
     # simplificadas automaticamente.
+    # Acordes com sus4 ou extensões tipo 7(4):
+
     qualidade = SUFIXOS.get(sufixo)
 
     if qualidade is None:

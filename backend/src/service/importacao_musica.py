@@ -7,6 +7,7 @@ from src.model import (
   MusicaArtista,
   MusicaInterrupcao,
 )
+from src.service.progressao_graus import gerar_progressao_relativa
 
 def importar_musica(
   db: Session,
@@ -14,6 +15,8 @@ def importar_musica(
   artista_nome: str,
   acordes_posicionados: list[tuple[int, str]],
   interrupcoes: list[int] | None = None,
+  tom: str | None = None,
+  letra: str | None = None
 ):
   titulo = titulo.strip()
   artista_nome = artista_nome.strip()
@@ -70,7 +73,15 @@ def importar_musica(
       db.add(artista)
       db.flush()
 
-    musica = Musica(titulo=titulo)
+    acordes_lista = [nome_acorde for _, nome_acorde in acordes_posicionados]
+    progressao_relativa = gerar_progressao_relativa(db, acordes_lista, tom)
+
+    musica = Musica(
+      titulo=titulo, 
+      tom=tom, 
+      letra=letra,
+      progressao_relativa=progressao_relativa
+    )
     db.add(musica)
     db.flush()
 

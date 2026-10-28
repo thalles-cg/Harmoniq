@@ -9,18 +9,34 @@ class ResultadoExtracao:
     avisos: list[str] = field(default_factory=list)
     interrupcoes: list[int] = field(default_factory=list)
     acordes_posicionados: list[tuple[int, str]] = field(default_factory=list)
+    tom: str | None = None
+
+def remover_baixo_inversao(cifra: str) -> str:
+    """Remove o baixo de uma inversão, sem cortar barras dentro de parênteses."""
+    profundidade = 0
+
+    for indice, caractere in enumerate(cifra):
+        if caractere == "(":
+            profundidade += 1
+        elif caractere == ")":
+            profundidade = max(0, profundidade - 1)
+        elif caractere == "/" and profundidade == 0:
+            return cifra[:indice]
+
+    return cifra
 
 def parece_cifra(elemento: str) -> bool:
     """
     Verifica se o elemento tem aparência de cifra,
     mesmo que sua qualidade não seja suportada.
     """
+    elemento_limpo = remover_baixo_inversao(elemento)
     return bool(
         re.fullmatch(
             r"[A-G](?:#|b)?"
             r"(?:(?:maj|min|m|dim|aug|sus|add|M|°|º|ø|"
             r"\d+|#|b|\(|/|\+|-).*)?",
-            elemento,
+            elemento_limpo,
             flags=re.IGNORECASE,
         )
     )
@@ -41,47 +57,56 @@ def eh_tablatura(linha: str) -> bool:
 
 def remover_anotacoes(linha: str) -> str:
     """
-    Remove observações entre parênteses que não sejam
-    cifras ou extensões de cifras.
+    Remove observações entre parênteses, preservando
+    apenas extensões de cifras ou grupos válidos de acordes.
     """
-
     def tratar_parenteses(match: re.Match) -> str:
         conteudo = match.group(1).strip()
 
-        # Preserva extensões como (b5), (#9), (13-), (5-).
-        if re.fullmatch(
-            r"(?:b|#)?\d+[+-]?",
-            conteudo,
-            flags=re.IGNORECASE,
-        ):
+        # Preserva extensões como (b5), (#9), etc.
+        if re.fullmatch(r"(?:b|#)?\d+[+-]?", conteudo, flags=re.IGNORECASE):
             return match.group(0)
 
-        # Preserva grupos que parecem conter somente cifras.
-        elementos = conteudo.split()
-
-        if elementos and all(
-            parece_cifra(elemento) for elemento in elementos
-        ):
-            return match.group(0)
+        # Preserva grupos que contêm apenas cifras válidas (ex: Em7 A7)
+        elementos = [remover_baixo_inversao(e) for e in conteudo.split()]
+        if elementos and all(parece_cifra(e) for e in elementos):
+            return f" {conteudo} "
 
         return " "
 
     return re.sub(r"\(([^)]*)\)", tratar_parenteses, linha)
 
+def extrair_tom(texto: str) -> str | None:
+    """
+    Extrai o tom indicado no cabeçalho da cifra,
+    preservando sua grafia original.
+    """
+    padrao = re.compile(
+        r"^\s*tom\s*:\s*([A-G](?:#|b)?m?)\s*$",
+        flags=re.IGNORECASE | re.MULTILINE,
+    )
+
+    correspondencia = padrao.search(texto)
+
+    if correspondencia is None:
+        return None
+
+    tom = correspondencia.group(1)
+
+    return tom[0].upper() + tom[1:]
 
 def extrair_acordes(texto: str) -> ResultadoExtracao:
     resultado = ResultadoExtracao()
+    resultado.tom = extrair_tom(texto)
+    
     ocorrencias_invalidas = defaultdict(list)
 
     posicao = 0
     pular_proxima_linha = False
 
-    for numero_linha, linha_original in enumerate(
-        texto.splitlines(),
-        start=1,
-    ):
-        linha = linha_original.strip()
-
+    for numero_linha, linha_original in enumerate(texto.splitlines(), start=1):
+        linha = re.sub(r'[\u200b\u200c\u200d\ufeff]', '', linha_original).strip()
+        
         if not linha:
             continue
 
@@ -108,7 +133,6 @@ def extrair_acordes(texto: str) -> ResultadoExtracao:
             nome_secao = cabecalho.group(1).lower()
 
             # Ignora somente o próprio cabeçalho de tablatura.
-            # As linhas seguintes serão analisadas normalmente.
             if any(
                 termo in nome_secao
                 for termo in ("dedilhado", "tablatura", "tab -")
@@ -149,7 +173,6 @@ def extrair_acordes(texto: str) -> ResultadoExtracao:
                 continue
 
         # Remove parênteses externos que envolvem uma sequência inteira
-        # de cifras, como: ( Em7(5-) A7(13-) ).
         linha_sem_parenteses = linha.strip()
 
         if (
@@ -157,7 +180,6 @@ def extrair_acordes(texto: str) -> ResultadoExtracao:
             and linha_sem_parenteses.endswith(")")
         ):
             conteudo = linha_sem_parenteses[1:-1].strip()
-
             elementos_internos = conteudo.split()
 
             if elementos_internos and all(
@@ -182,7 +204,6 @@ def extrair_acordes(texto: str) -> ResultadoExtracao:
         elementos = linha.split()
         
         # Só processa linhas formadas inteiramente por cifras.
-        # Isso evita interpretar letras da música como acordes.
         if not all(parece_cifra(elemento) for elemento in elementos):
             continue
 

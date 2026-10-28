@@ -100,6 +100,7 @@ def main():
   print("2 - Colar cifra completa")
 
   opcao = input("\nEscolha: ").strip()
+  tom = None
 
   if opcao == "1":
     entrada = input("\nAcordes separados por espaços: ")
@@ -135,6 +136,9 @@ def main():
   elif opcao == "2":
     texto = ler_cifra()
     resultado = extrair_acordes(texto)
+    tom = resultado.tom
+
+    print(f"Tom identificado: {tom or 'Não informado'}")
 
     acordes = resultado.acordes
     acordes_posicionados = resultado.acordes_posicionados
@@ -152,8 +156,8 @@ def main():
       )
 
     if not acordes:
-        print("\nNenhum acorde foi identificado.")
-        return
+      print("\nNenhum acorde foi identificado.")
+      return
 
   else:
     print("\nOpção inválida.")
@@ -180,6 +184,8 @@ def main():
       artista_nome=artista,
       acordes_posicionados=acordes_posicionados,
       interrupcoes=interrupcoes,
+      tom=tom,
+      letra=texto
     )
 
     print("\nMúsica cadastrada com sucesso!")

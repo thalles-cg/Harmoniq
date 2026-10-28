@@ -10,7 +10,8 @@ class Musica(Base):
   letra: Mapped[str | None] = mapped_column(Text)
   album_id: Mapped[int | None] = mapped_column(ForeignKey("album.id"))
   progressao_relativa: Mapped[str | None] = mapped_column(Text)
-
+  tom: Mapped[str | None] = mapped_column(String(3), nullable=True)
+  
   album: Mapped["Album | None"] = relationship(back_populates="musicas")
   artistas: Mapped[list["MusicaArtista"]] = relationship(back_populates="musica")
   generos: Mapped[list["MusicaGenero"]] = relationship(back_populates="musica")
