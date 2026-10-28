@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 from src.controller import musica as controller
 from src.database.dependencies import get_db
-from src.schema import MusicaCreate, MusicaResponse, MusicaUpdate, MusicaBuscaSequenciaResponse
+from src.schema import MusicaCreate, MusicaResponse, MusicaUpdate, MusicaBuscaSequenciaResponse, MusicaRepertorioResultado
 
 router = APIRouter(prefix="/musicas", tags=["Músicas"])
 
@@ -14,7 +14,7 @@ def criar_musica(dados: MusicaCreate, db: Session = Depends(get_db)):
 def listar_musicas(db: Session = Depends(get_db)):
   return controller.listar(db)
 
-@router.get("/busca/repertorio", response_model=list[MusicaResponse])
+@router.get("/busca/repertorio", response_model=list[MusicaRepertorioResultado])
 def buscar_por_repertorio(acordes: list[str] = Query(...), db: Session = Depends(get_db)):
   return controller.buscar_repertorio(db, acordes)
 

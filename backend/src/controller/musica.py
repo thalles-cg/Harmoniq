@@ -41,7 +41,7 @@ def buscar(db: Session, musica_id: int) -> Musica:
 
   return musica
 
-def buscar_repertorio(db: Session, nomes_acordes: list[str]) -> list[Musica]:
+def buscar_repertorio(db: Session, nomes_acordes: list[str]) -> list[dict]:
   if not nomes_acordes:
     raise HTTPException(
       status_code=400,

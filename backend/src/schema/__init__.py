@@ -1,6 +1,6 @@
 from .acorde import AcordeBase, AcordeCreate, AcordeResponse, AcordeUpdate
 from .artista import ArtistaBase, ArtistaCreate, ArtistaResponse
-from .musica import MusicaBase, MusicaCreate, MusicaResponse, MusicaUpdate, MusicaBuscaSequenciaResponse
+from .musica import MusicaBase, MusicaCreate, MusicaResponse, MusicaUpdate, MusicaBuscaSequenciaResponse, MusicaRepertorioResultado
 from .nota import NotaBase, NotaCreate, NotaResponse, NotaUpdate
 from .usuario import UsuarioBase, UsuarioCreate, UsuarioResponse
 from .autenticacao import LoginRequest
@@ -17,6 +17,7 @@ __all__ = [
   "MusicaResponse",
   "MusicaUpdate",
   "MusicaBuscaSequenciaResponse",
+  "MusicaRepertorioResultado",
   "NotaBase",
   "NotaCreate",
   "NotaResponse",

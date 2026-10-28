@@ -23,3 +23,9 @@ class MusicaBuscaSequenciaResponse(BaseModel):
   musica: MusicaResponse
   similaridade: float
   ocorrencias: int
+
+class MusicaRepertorioResultado(BaseModel):
+  musica: MusicaResponse
+  porcentagem: float
+  acordes_conhecidos: list[str]
+  acordes_faltantes: list[str]
