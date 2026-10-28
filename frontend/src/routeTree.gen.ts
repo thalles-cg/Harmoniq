@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as MusicaIdRouteImport } from './routes/musica.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,18 +35,25 @@ const PerfilRoute = PerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MusicaIdRoute = MusicaIdRouteImport.update({
+  id: '/musica/$id',
+  path: '/musica/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
+  '/musica/$id': typeof MusicaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
+  '/musica/$id': typeof MusicaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,14 @@ export interface FileRoutesById {
   '/cadastro': typeof CadastroRoute
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
+  '/musica/$id': typeof MusicaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cadastro' | '/login' | '/perfil'
+  fullPaths: '/' | '/cadastro' | '/login' | '/perfil' | '/musica/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cadastro' | '/login' | '/perfil'
-  id: '__root__' | '/' | '/cadastro' | '/login' | '/perfil'
+  to: '/' | '/cadastro' | '/login' | '/perfil' | '/musica/$id'
+  id: '__root__' | '/' | '/cadastro' | '/login' | '/perfil' | '/musica/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +76,7 @@ export interface RootRouteChildren {
   CadastroRoute: typeof CadastroRoute
   LoginRoute: typeof LoginRoute
   PerfilRoute: typeof PerfilRoute
+  MusicaIdRoute: typeof MusicaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -99,6 +109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/musica/$id': {
+      id: '/musica/$id'
+      path: '/musica/$id'
+      fullPath: '/musica/$id'
+      preLoaderRoute: typeof MusicaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -107,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   CadastroRoute: CadastroRoute,
   LoginRoute: LoginRoute,
   PerfilRoute: PerfilRoute,
+  MusicaIdRoute: MusicaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
