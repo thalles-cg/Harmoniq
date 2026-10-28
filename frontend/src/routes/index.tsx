@@ -43,6 +43,10 @@ function Home() {
   const [mode, setMode] = useState<Mode>("split");
   const [autenticado, setAutenticado] = useState(false);
 
+  const [manualSubMode, setManualSubMode] = useState<"exact" | "repertoire">("exact");
+  const [manualInitialItems, setManualInitialItems] = useState<string[]>([]);
+  const [manualAutoSearch, setManualAutoSearch] = useState(false);
+
   useEffect(() => {
     async function verificarAutenticacao() {
       const usuario = await buscarUsuarioAutenticado();
@@ -145,7 +149,11 @@ function Home() {
             </header>
 
             <div className="min-h-0 flex-1 overflow-y-auto pt-2">
-              <ManualPanel />
+              <ManualPanel
+                initialMode={manualSubMode}
+                initialItems={manualInitialItems}
+                autoSearch={manualAutoSearch}
+              />
             </div>
           </div>
         ) : (
@@ -201,7 +209,20 @@ function Home() {
             </header>
 
             <div className="min-h-0 flex-1 overflow-y-auto pt-2">
-              <AudioPanel />
+              <AudioPanel
+                onBuscarRepertorio={(acordes) => {
+                  setManualSubMode("repertoire");
+                  setManualInitialItems(acordes);
+                  setManualAutoSearch(true);
+                  setMode("manual");
+                }}
+                onBuscarSequencia={(graus) => {
+                  setManualSubMode("exact");
+                  setManualInitialItems(graus);
+                  setManualAutoSearch(true);
+                  setMode("manual");
+                }}
+              />
             </div>
           </div>
         ) : (

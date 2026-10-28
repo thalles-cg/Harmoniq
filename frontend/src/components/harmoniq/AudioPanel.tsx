@@ -1,10 +1,142 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, Square, UploadCloud, Volume2, Sparkles, Loader2, AlertCircle } from "lucide-react";
+import {
+  Mic,
+  Square,
+  UploadCloud,
+  Volume2,
+  Sparkles,
+  Loader2,
+  AlertCircle,
+  Music2,
+  ListMusic,
+} from "lucide-react";
 import { transcreverAudio, type AcordeDetectado } from "@/services/transcricao";
 
 const BARS = Array.from({ length: 36 }, (_, i) => i);
 
-export function AudioPanel() {
+const NOTAS_PITCH: Record<string, number> = {
+  C: 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4, Fb: 4, "E#": 5,
+  F: 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9, "A#": 10, Bb: 10, B: 11, Cb: 11,
+};
+
+// Converte notações do BTC (ex: "A:min", "C:maj") para cifras padrão ("Am", "C")
+export function formatarCifra(cifra: string): string {
+  if (!cifra || cifra === "N") return "";
+  const limpa = cifra.trim();
+
+  const [raiz, tipo] = limpa.split(":");
+  if (!tipo) return raiz;
+
+  if (tipo === "maj") return raiz;
+  if (tipo === "min") return `${raiz}m`;
+  if (tipo === "min7") return `${raiz}m7`;
+  if (tipo === "maj7") return `${raiz}maj7`;
+
+  return `${raiz}${tipo}`;
+}
+
+function extrairRaizEQualidade(cifra: string): { raiz: string; pitch: number; eMenor: boolean } | null {
+  const match = cifra.trim().match(/^([A-G][#b]?)(.*)$/);
+  if (!match) return null;
+
+  const raiz = match[1];
+  const resto = match[2] || "";
+  const pitch = NOTAS_PITCH[raiz];
+  if (pitch === undefined) return null;
+
+  const eMenor = /^m(?!aj)/i.test(resto);
+  return { raiz, pitch, eMenor };
+}
+
+export function converterAcordesParaGraus(cifras: string[]): string[] {
+  const parsed = cifras
+    .map(extrairRaizEQualidade)
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+  if (parsed.length === 0) return [];
+
+  let melhorTonalidade = { tonicaPitch: parsed[0].pitch, eMenor: parsed[0].eMenor, score: -1 };
+
+  for (let t = 0; t < 12; t++) {
+    for (const eMenor of [false, true]) {
+      let score = 0;
+      for (const item of parsed) {
+        const interval = (item.pitch - t + 12) % 12;
+        if (!eMenor) {
+          if (
+            (!item.eMenor && [0, 5, 7].includes(interval)) ||
+            (item.eMenor && [2, 4, 9, 11].includes(interval))
+          ) {
+            score++;
+          }
+        } else {
+          if (
+            (item.eMenor && [0, 2, 5, 7].includes(interval)) ||
+            (!item.eMenor && [3, 7, 8, 10].includes(interval))
+          ) {
+            score++;
+          }
+        }
+      }
+
+      const eTonalidadeDoPrimeiro = t === parsed[0].pitch && eMenor === parsed[0].eMenor;
+      const scoreFinal = score + (eTonalidadeDoPrimeiro ? 0.5 : 0);
+
+      if (scoreFinal > melhorTonalidade.score) {
+        melhorTonalidade = { tonicaPitch: t, eMenor, score: scoreFinal };
+      }
+    }
+  }
+
+  const { tonicaPitch, eMenor: tomMenor } = melhorTonalidade;
+
+  const grausMaior: Record<number, { maj: string; min: string }> = {
+    0: { maj: "I", min: "i" },
+    1: { maj: "bII", min: "bii" },
+    2: { maj: "II", min: "ii" },
+    3: { maj: "bIII", min: "biii" },
+    4: { maj: "III", min: "iii" },
+    5: { maj: "IV", min: "iv" },
+    6: { maj: "#IV", min: "#iv" },
+    7: { maj: "V", min: "v" },
+    8: { maj: "bVI", min: "bvi" },
+    9: { maj: "VI", min: "vi" },
+    10: { maj: "bVII", min: "bvii" },
+    11: { maj: "VII", min: "vii" },
+  };
+
+  const grausMenor: Record<number, { maj: string; min: string }> = {
+    0: { maj: "I", min: "i" },
+    1: { maj: "bII", min: "bii" },
+    2: { maj: "II", min: "ii" },
+    3: { maj: "III", min: "biii" },
+    4: { maj: "#III", min: "iii" },
+    5: { maj: "IV", min: "iv" },
+    6: { maj: "#IV", min: "#iv" },
+    7: { maj: "V", min: "v" },
+    8: { maj: "VI", min: "bvi" },
+    9: { maj: "#VI", min: "vi" },
+    10: { maj: "VII", min: "bvii" },
+    11: { maj: "#VII", min: "vii" },
+  };
+
+  const tabela = tomMenor ? grausMenor : grausMaior;
+
+  return parsed.map((item) => {
+    const interval = (item.pitch - tonicaPitch + 12) % 12;
+    const info = tabela[interval];
+    return item.eMenor ? info.min : info.maj;
+  });
+}
+
+type AudioPanelProps = {
+  onBuscarRepertorio?: (acordes: string[]) => void;
+  onBuscarSequencia?: (graus: string[]) => void;
+};
+
+export function AudioPanel({
+  onBuscarRepertorio,
+  onBuscarSequencia,
+}: AudioPanelProps) {
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [arquivo, setArquivo] = useState<File | null>(null);
@@ -18,7 +150,6 @@ export function AudioPanel() {
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Gerencia a URL do objeto de áudio para preview
   useEffect(() => {
     if (!arquivo) {
       setAudioUrl(null);
@@ -41,7 +172,6 @@ export function AudioPanel() {
     audioChunksRef.current = [];
 
     try {
-      // Desativa os filtros de voz do navegador para capturar o áudio limpo do instrumento
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: false,
@@ -73,7 +203,6 @@ export function AudioPanel() {
         }
       };
 
-      // Passa 250ms como timeslice para garantir o envio constante de blocos de áudio
       mediaRecorder.start(250);
       setSeconds(0);
       setRecording(true);
@@ -83,7 +212,7 @@ export function AudioPanel() {
       setStatus("error");
     }
   }
-  
+
   function pararGravacao() {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
@@ -137,7 +266,14 @@ export function AudioPanel() {
 
     try {
       const resultado = await transcreverAudio(arquivo);
-      setAcordes(resultado);
+      const resultadoFormatado = resultado
+        .map((item) => ({
+          ...item,
+          acorde: formatarCifra(item.acorde),
+        }))
+        .filter((item) => item.acorde.length > 0);
+
+      setAcordes(resultadoFormatado);
       setStatus("done");
     } catch (error) {
       console.error("Erro ao transcrever áudio:", error);
@@ -148,6 +284,22 @@ export function AudioPanel() {
       );
       setStatus("error");
     }
+  }
+
+  function obterSequenciaFormatada(): string[] {
+    const listaRaw = acordes.map((item) => item.acorde.trim()).filter(Boolean);
+    return listaRaw.filter((acorde, i) => i === 0 || acorde !== listaRaw[i - 1]);
+  }
+
+  function obterSequenciaEmGraus(): string[] {
+    const seqCifras = obterSequenciaFormatada();
+    return converterAcordesParaGraus(seqCifras);
+  }
+
+  function obterAcordesUnicos(): string[] {
+    return Array.from(
+      new Set(acordes.map((item) => item.acorde.trim()).filter(Boolean))
+    );
   }
 
   return (
@@ -210,11 +362,10 @@ export function AudioPanel() {
           {recording
             ? "Gravando áudio do microfone..."
             : arquivo
-              ? "Áudio gravado/selecionado com sucesso."
+              ? "Áudio pronto para análise."
               : "Clique no microfone para gravar ou selecione um arquivo abaixo."}
         </p>
 
-        {/* Player de áudio para pré-escuta */}
         {audioUrl && (
           <div className="w-full max-w-md pt-2">
             <p className="mb-2 text-center text-xs text-muted-foreground">
@@ -279,7 +430,7 @@ export function AudioPanel() {
       )}
 
       {status === "done" && (
-        <div className="glass animate-rise space-y-4 rounded-2xl p-5">
+        <div className="glass animate-rise space-y-5 rounded-2xl p-5">
           <div>
             <p className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">
               Acordes detectados no áudio
@@ -290,19 +441,45 @@ export function AudioPanel() {
                 Nenhum acorde foi identificado neste áudio. Tente tocar um instrumento harmônico (violão, guitarra, piano) mais próximo do microfone.
               </p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {acordes.map((item, i) => (
-                  <span
-                    key={`${item.inicio}-${item.fim}-${i}`}
-                    title={`${item.inicio.toFixed(2)}s – ${item.fim.toFixed(2)}s`}
-                    className="rounded-full bg-[image:var(--gradient-audio)] px-3 py-1.5 text-sm font-medium text-accent-foreground"
-                  >
-                    {item.acorde}
-                    <span className="ml-2 text-xs opacity-80">
-                      {item.inicio.toFixed(1)}s
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {acordes.map((item, i) => (
+                    <span
+                      key={`${item.inicio}-${item.fim}-${i}`}
+                      title={`${item.inicio.toFixed(2)}s – ${item.fim.toFixed(2)}s`}
+                      className="rounded-full bg-[image:var(--gradient-audio)] px-3 py-1.5 text-sm font-medium text-accent-foreground"
+                    >
+                      {item.acorde}
+                      <span className="ml-2 text-xs opacity-80">
+                        {item.inicio.toFixed(1)}s
+                      </span>
                     </span>
-                  </span>
-                ))}
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onBuscarRepertorio && onBuscarRepertorio(obterAcordesUnicos())
+                    }
+                    className="flex items-center justify-center gap-2 rounded-xl bg-background/50 px-4 py-3 text-sm font-medium transition-colors hover:bg-background/80 border border-border"
+                  >
+                    <ListMusic className="size-4 text-emerald" />
+                    Buscar por Repertório ({obterAcordesUnicos().join(", ")})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onBuscarSequencia && onBuscarSequencia(obterSequenciaEmGraus())
+                    }
+                    className="flex items-center justify-center gap-2 rounded-xl bg-emerald/15 px-4 py-3 text-sm font-medium text-emerald transition-colors hover:bg-emerald/20 border border-emerald/30"
+                  >
+                    <Music2 className="size-4" />
+                    Buscar por Sequência ({obterSequenciaEmGraus().join(" → ")})
+                  </button>
+                </div>
               </div>
             )}
           </div>

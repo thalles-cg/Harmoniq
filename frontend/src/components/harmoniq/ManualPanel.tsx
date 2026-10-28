@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Search, X, Sparkles, ListOrdered, LayoutGrid } from "lucide-react";
 import { SongResults, type Song, type SongSearchResult } from "./SongResults";
 
@@ -11,6 +11,7 @@ type Acorde = {
   qualidade: string;
   notas: number[];
 };
+
 const GRAUS_DISPONIVEIS = [
   "I", "ii", "iii", "IV", "V", "vi", "vii",
   "i", "II", "III", "iv", "v", "VI", "VII"
@@ -18,12 +19,26 @@ const GRAUS_DISPONIVEIS = [
 
 const API_URL = import.meta.env["VITE_API_URL"];
 
-export function ManualPanel() {
-  const [acordes, setAcordes] = useState<Acorde[]>([]);
-  const [mode, setMode] = useState<"exact" | "repertoire">("exact");
+type ManualPanelProps = {
+  initialMode?: "exact" | "repertoire";
+  initialItems?: string[];
+  autoSearch?: boolean;
+};
 
-  const [exactDegrees, setExactDegrees] = useState<string[]>(["I", "V", "VI", "IV"]);
-  const [repertoireChords, setRepertoireChords] = useState<string[]>([]);
+export function ManualPanel({
+  initialMode = "exact",
+  initialItems = [],
+  autoSearch = false,
+}: ManualPanelProps) {
+  const [acordes, setAcordes] = useState<Acorde[]>([]);
+  const [mode, setMode] = useState<"exact" | "repertoire">(initialMode);
+
+  const [exactDegrees, setExactDegrees] = useState<string[]>(
+    initialMode === "exact" && initialItems.length > 0 ? initialItems : ["I", "V", "VI", "IV"]
+  );
+  const [repertoireChords, setRepertoireChords] = useState<string[]>(
+    initialMode === "repertoire" && initialItems.length > 0 ? initialItems : []
+  );
 
   const [exactSearched, setExactSearched] = useState(false);
   const [repertoireSearched, setRepertoireSearched] = useState(false);
@@ -31,6 +46,46 @@ export function ManualPanel() {
   const [exactSongs, setExactSongs] = useState<SongSearchResult[]>([]);
   const [repertoireSongs, setRepertoireSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const executarBusca = useCallback(
+    async (searchMode: "exact" | "repertoire", items: string[]) => {
+      if (items.length === 0) return;
+
+      setLoading(true);
+
+      try {
+        const params = new URLSearchParams();
+        const paramName = searchMode === "exact" ? "graus" : "acordes";
+
+        items.forEach((val) => {
+          params.append(paramName, val);
+        });
+
+        const endpoint = searchMode === "exact" ? "sequencia" : "repertorio";
+
+        const response = await fetch(
+          `${API_URL}/musicas/busca/${endpoint}?${params.toString()}`
+        );
+
+        if (!response.ok) throw new Error("Erro ao buscar músicas.");
+
+        if (searchMode === "exact") {
+          const data: SongSearchResult[] = await response.json();
+          setExactSongs(data);
+          setExactSearched(true);
+        } else {
+          const data: Song[] = await response.json();
+          setRepertoireSongs(data);
+          setRepertoireSearched(true);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar músicas:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     async function carregarAcordes() {
@@ -45,6 +100,23 @@ export function ManualPanel() {
     }
     carregarAcordes();
   }, []);
+
+  useEffect(() => {
+    if (initialMode) {
+      setMode(initialMode);
+    }
+    if (initialItems && initialItems.length > 0) {
+      if (initialMode === "repertoire") {
+        setRepertoireChords(initialItems);
+      } else {
+        setExactDegrees(initialItems);
+      }
+
+      if (autoSearch) {
+        executarBusca(initialMode, initialItems);
+      }
+    }
+  }, [initialMode, initialItems, autoSearch, executarBusca]);
 
   const acordesPorFundamental = acordes.reduce<Record<string, Acorde[]>>(
     (grupos, acorde) => {
@@ -73,42 +145,9 @@ export function ManualPanel() {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
     const items = mode === "exact" ? exactDegrees : repertoireChords;
-    if (items.length === 0) return;
-
-    setLoading(true);
-
-    try {
-      const params = new URLSearchParams();
-      const paramName = mode === "exact" ? "graus" : "acordes";
-
-      items.forEach((val) => {
-        params.append(paramName, val);
-      });
-
-      const endpoint = mode === "exact" ? "sequencia" : "repertorio";
-
-      const response = await fetch(
-        `${API_URL}/musicas/busca/${endpoint}?${params.toString()}`
-      );
-
-      if (!response.ok) throw new Error("Erro ao buscar músicas.");
-
-      if (mode === "exact") {
-        const data: SongSearchResult[] = await response.json();
-        setExactSongs(data);
-        setExactSearched(true);
-      } else {
-        const data: Song[] = await response.json();
-        setRepertoireSongs(data);
-        setRepertoireSearched(true);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar músicas:", error);
-    } finally {
-      setLoading(false);
-    }
+    executarBusca(mode, items);
   };
 
   const currentItems = mode === "exact" ? exactDegrees : repertoireChords;
@@ -184,7 +223,6 @@ export function ManualPanel() {
           </div>
         </div>
 
-        {/* Renderiza painel de Graus se for modo exact, ou painel de Acordes se for repertório */}
         {mode === "exact" ? (
           <div className="rounded-xl border border-border bg-background/40 p-4">
             <p className="mb-3 text-xs tracking-wide text-muted-foreground uppercase">
@@ -237,7 +275,11 @@ export function ManualPanel() {
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-[image:var(--gradient-manual)] px-6 py-3.5 font-display font-semibold text-primary-foreground shadow-[var(--shadow-glow-manual)] transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Sparkles className="size-4" />
-          {loading ? "Buscando..." : "Buscar Músicas por Graus"}
+          {loading
+            ? "Buscando..."
+            : mode === "exact"
+              ? "Buscar Músicas por Graus"
+              : "Buscar Músicas no Meu Repertório"}
         </button>
       </div>
 
