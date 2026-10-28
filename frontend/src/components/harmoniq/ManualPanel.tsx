@@ -44,7 +44,7 @@ export function ManualPanel({
   const [repertoireSearched, setRepertoireSearched] = useState(false);
 
   const [exactSongs, setExactSongs] = useState<SongSearchResult[]>([]);
-  const [repertoireSongs, setRepertoireSongs] = useState<Song[]>([]);
+  const [repertoireSongs, setRepertoireSongs] = useState<SongSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
 
   const executarBusca = useCallback(
@@ -74,7 +74,7 @@ export function ManualPanel({
           setExactSongs(data);
           setExactSearched(true);
         } else {
-          const data: Song[] = await response.json();
+          const data: SongSearchResult[] = await response.json();
           setRepertoireSongs(data);
           setRepertoireSearched(true);
         }

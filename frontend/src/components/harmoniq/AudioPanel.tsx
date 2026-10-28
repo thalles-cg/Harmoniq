@@ -24,7 +24,11 @@ export function formatarCifra(cifra: string): string {
   if (!cifra || cifra === "N") return "";
   const limpa = cifra.trim();
 
-  const [raiz, tipo] = limpa.split(":");
+  const partes = limpa.split(":");
+  const raiz = partes[0];
+  const tipo = partes[1];
+
+  if (!raiz) return "";
   if (!tipo) return raiz;
 
   if (tipo === "maj") return raiz;
@@ -37,7 +41,7 @@ export function formatarCifra(cifra: string): string {
 
 function extrairRaizEQualidade(cifra: string): { raiz: string; pitch: number; eMenor: boolean } | null {
   const match = cifra.trim().match(/^([A-G][#b]?)(.*)$/);
-  if (!match) return null;
+  if (!match || !match[1]) return null;
 
   const raiz = match[1];
   const resto = match[2] || "";
@@ -52,9 +56,11 @@ export function converterAcordesParaGraus(cifras: string[]): string[] {
   const parsed = cifras
     .map(extrairRaizEQualidade)
     .filter((item): item is NonNullable<typeof item> => item !== null);
-  if (parsed.length === 0) return [];
 
-  let melhorTonalidade = { tonicaPitch: parsed[0].pitch, eMenor: parsed[0].eMenor, score: -1 };
+  const primeiro = parsed[0];
+  if (!primeiro) return [];
+
+  let melhorTonalidade = { tonicaPitch: primeiro.pitch, eMenor: primeiro.eMenor, score: -1 };
 
   for (let t = 0; t < 12; t++) {
     for (const eMenor of [false, true]) {
@@ -78,7 +84,7 @@ export function converterAcordesParaGraus(cifras: string[]): string[] {
         }
       }
 
-      const eTonalidadeDoPrimeiro = t === parsed[0].pitch && eMenor === parsed[0].eMenor;
+      const eTonalidadeDoPrimeiro = t === primeiro.pitch && eMenor === primeiro.eMenor;
       const scoreFinal = score + (eTonalidadeDoPrimeiro ? 0.5 : 0);
 
       if (scoreFinal > melhorTonalidade.score) {
@@ -114,7 +120,7 @@ export function converterAcordesParaGraus(cifras: string[]): string[] {
     6: { maj: "#IV", min: "#iv" },
     7: { maj: "V", min: "v" },
     8: { maj: "VI", min: "bvi" },
-    9: { maj: "#VI", min: "vi" },
+    9: { maj: "#VI", min: "#iv" },
     10: { maj: "VII", min: "bvii" },
     11: { maj: "#VII", min: "vii" },
   };
@@ -123,7 +129,7 @@ export function converterAcordesParaGraus(cifras: string[]): string[] {
 
   return parsed.map((item) => {
     const interval = (item.pitch - tonicaPitch + 12) % 12;
-    const info = tabela[interval];
+    const info = tabela[interval] ?? { maj: "I", min: "i" };
     return item.eMenor ? info.min : info.maj;
   });
 }
