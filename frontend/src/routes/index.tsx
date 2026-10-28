@@ -69,7 +69,7 @@ function Home() {
   return (
     <main className="min-h-dvh overflow-hidden bg-background font-sans text-foreground">
       <h1 className="sr-only">
-        HarmoniQ — buscador de acordes e progressões musicais
+        HarmoniQ - buscador de acordes e progressões musicais
       </h1>
 
       {/* Barra superior */}
@@ -120,7 +120,7 @@ function Home() {
           </button>
         ) : mode === "manual" ? (
           <div className="flex h-full flex-col">
-            <header className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-5 py-4">
+            <header className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-5 pb-4 pt-16 sm:pt-20">
               <button
                 onClick={() => setMode("split")}
                 className="flex items-center gap-2 rounded-xl bg-background/40 px-3 py-2 text-sm backdrop-blur-md transition-colors hover:bg-background/70"
@@ -176,7 +176,7 @@ function Home() {
           </button>
         ) : mode === "audio" ? (
           <div className="flex h-full flex-col">
-            <header className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-5 py-4">
+            <header className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-5 pb-4 pt-16 sm:pt-20">
               <button
                 onClick={() => setMode("split")}
                 className="flex items-center gap-2 rounded-xl bg-background/40 px-3 py-2 text-sm backdrop-blur-md transition-colors hover:bg-background/70"
