@@ -9,6 +9,7 @@ import {
   Music,
   LogIn,
   LogOut,
+  User,
 } from "lucide-react";
 import { ManualPanel } from "@/components/harmoniq/ManualPanel";
 import { AudioPanel } from "@/components/harmoniq/AudioPanel";
@@ -82,16 +83,26 @@ function Home() {
         </div>
 
         {autenticado ? (
-          <button
-            onClick={() => {
-              logout();
-              setAutenticado(false);
-            }}
-            className="pointer-events-auto flex items-center gap-2 rounded-full bg-background/50 px-4 py-2 text-sm font-medium backdrop-blur-md transition-colors hover:bg-background/70"
-          >
-            <LogOut className="size-4" />
-            Sair
-          </button>
+          <div className="pointer-events-auto flex items-center gap-2">
+            <Link
+              to="/perfil"
+              className="flex items-center gap-2 rounded-full bg-background/50 px-4 py-2 text-sm font-medium backdrop-blur-md transition-colors hover:bg-background/70"
+            >
+              <User className="size-4 text-emerald" />
+              <span>Perfil</span>
+            </Link>
+
+            <button
+              onClick={() => {
+                logout();
+                setAutenticado(false);
+              }}
+              className="flex items-center gap-2 rounded-full bg-background/50 px-4 py-2 text-sm font-medium backdrop-blur-md transition-colors hover:bg-background/70"
+            >
+              <LogOut className="size-4" />
+              Sair
+            </button>
+          </div>
         ) : (
           <Link
             to="/login"
