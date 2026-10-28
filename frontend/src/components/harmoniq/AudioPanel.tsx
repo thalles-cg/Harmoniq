@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {Mic, Square, UploadCloud, Volume2, Sparkles, Loader2, AlertCircle,} from "lucide-react";
+import { Mic, Square, UploadCloud, Volume2, Sparkles, Loader2, AlertCircle } from "lucide-react";
 import { transcreverAudio, type AcordeDetectado } from "@/services/transcricao";
 
 const BARS = Array.from({ length: 36 }, (_, i) => i);
@@ -8,28 +8,114 @@ export function AudioPanel() {
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [arquivo, setArquivo] = useState<File | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [acordes, setAcordes] = useState<AcordeDetectado[]>([]);
-  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">(
-    "idle",
-  );
+  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [erro, setErro] = useState("");
+
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Gerencia a URL do objeto de áudio para preview
+  useEffect(() => {
+    if (!arquivo) {
+      setAudioUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(arquivo);
+    setAudioUrl(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [arquivo]);
+
+  async function iniciarGravacao() {
+    setErro("");
+    setArquivo(null);
+    setAcordes([]);
+    setStatus("idle");
+    audioChunksRef.current = [];
+
+    try {
+      // Desativa os filtros de voz do navegador para capturar o áudio limpo do instrumento
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+        },
+      });
+      streamRef.current = stream;
+
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const mimeType = mediaRecorder.mimeType || "audio/webm";
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        const file = new File([audioBlob], "audio_capturado.webm", { type: mimeType });
+
+        setArquivo(file);
+
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop());
+          streamRef.current = null;
+        }
+      };
+
+      // Passa 250ms como timeslice para garantir o envio constante de blocos de áudio
+      mediaRecorder.start(250);
+      setSeconds(0);
+      setRecording(true);
+    } catch (err) {
+      console.error("Erro ao acessar microfone:", err);
+      setErro("Permissão de microfone negada ou dispositivo indisponível.");
+      setStatus("error");
+    }
+  }
+  
+  function pararGravacao() {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    setRecording(false);
+  }
 
   useEffect(() => {
     if (!recording) return;
+
     timer.current = setInterval(() => {
       setSeconds((s) => {
         if (s >= 29) {
-          setRecording(false);
+          pararGravacao();
           return 30;
         }
         return s + 1;
       });
     }, 1000);
+
     return () => {
       if (timer.current) clearInterval(timer.current);
     };
   }, [recording]);
+
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
 
   const fmt = (s: number) => `00:${String(s).padStart(2, "0")}`;
 
@@ -79,10 +165,9 @@ export function AudioPanel() {
             type="button"
             onClick={() => {
               if (recording) {
-                setRecording(false);
+                pararGravacao();
               } else {
-                setSeconds(0);
-                setRecording(true);
+                iniciarGravacao();
               }
             }}
             aria-label={recording ? "Parar gravação" : "Iniciar gravação"}
@@ -123,9 +208,21 @@ export function AudioPanel() {
         <p className="flex items-center gap-2 text-xs text-muted-foreground">
           <Volume2 className="size-3.5" />
           {recording
-            ? "O temporizador está ativo; a captura de áudio ainda não foi implementada."
-            : "Selecione um arquivo de áudio para começar a análise."}
+            ? "Gravando áudio do microfone..."
+            : arquivo
+              ? "Áudio gravado/selecionado com sucesso."
+              : "Clique no microfone para gravar ou selecione um arquivo abaixo."}
         </p>
+
+        {/* Player de áudio para pré-escuta */}
+        {audioUrl && (
+          <div className="w-full max-w-md pt-2">
+            <p className="mb-2 text-center text-xs text-muted-foreground">
+              Pré-escuta do áudio capturado:
+            </p>
+            <audio controls src={audioUrl} className="w-full rounded-xl shadow-inner" />
+          </div>
+        )}
       </div>
 
       <label
@@ -139,12 +236,12 @@ export function AudioPanel() {
         <UploadCloud className="size-6 text-emerald" />
         <span className="text-sm">Envie um arquivo de áudio</span>
         <span className="text-xs text-muted-foreground">
-          {arquivo?.name ?? "Arraste e solte aqui ou clique para selecionar"}
+          {arquivo ? "Áudio selecionado" : "Arraste e solte aqui ou clique para selecionar"}
         </span>
 
         <input
           type="file"
-          accept=".mp3,.wav,.flac,.ogg,.m4a,audio/*"
+          accept=".mp3,.wav,.flac,.ogg,.m4a,.webm,audio/*"
           className="hidden"
           onChange={(event) => selecionarArquivo(event.target.files?.[0])}
         />
@@ -190,7 +287,7 @@ export function AudioPanel() {
 
             {acordes.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Nenhum acorde foi identificado neste áudio.
+                Nenhum acorde foi identificado neste áudio. Tente tocar um instrumento harmônico (violão, guitarra, piano) mais próximo do microfone.
               </p>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -218,4 +315,3 @@ export function AudioPanel() {
     </div>
   );
 }
-

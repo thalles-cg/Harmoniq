@@ -16,9 +16,10 @@ export async function transcreverAudio(arquivo: File): Promise<AcordeDetectado[]
   });
 
   if (!response.ok) {
-    throw new Error("Não foi possível transcrever o áudio.");
+    const erroBody = await response.json().catch(() => null);
+    const mensagem = erroBody?.detail || "Não foi possível transcrever o áudio.";
+    throw new Error(mensagem);
   }
 
   return response.json();
 }
-
