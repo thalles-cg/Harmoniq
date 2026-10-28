@@ -1,91 +1,156 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Search, X, Sparkles, ListOrdered, LayoutGrid } from "lucide-react";
-import { SongResults, type Song } from "./SongResults";
+import { SongResults, type Song, type SongSearchResult } from "./SongResults";
 
-const ROOTS = ["C", "D", "E", "F", "G", "A", "B"];
-const MODIFIERS = ["", "m", "7", "maj7"];
+type Acorde = {
+  id: number;
+  nome_cifra: string;
+  nome_extenso: string;
+  nota_fundamental_id: number;
+  nota_fundamental: string;
+  qualidade: string;
+  notas: number[];
+};
+
+const GRAUS_DISPONIVEIS = [
+  "I", "ii", "iii", "IV", "V", "vi", "vii",
+  "i", "II", "III", "iv", "v", "VI", "VII"
+];
 
 const API_URL = import.meta.env["VITE_API_URL"];
 
-export function ManualPanel() {
-  const [mode, setMode] = useState<"exact" | "repertoire">("exact");
-  const [query, setQuery] = useState("");
+type ManualPanelProps = {
+  initialMode?: "exact" | "repertoire";
+  initialItems?: string[];
+  autoSearch?: boolean;
+};
 
-  const [exactChords, setExactChords] = useState<string[]>(["C", "G", "Am", "F",]);
-  const [repertoireChords, setRepertoireChords] = useState<string[]>([]);
+export function ManualPanel({
+  initialMode = "exact",
+  initialItems = [],
+  autoSearch = false,
+}: ManualPanelProps) {
+  const [acordes, setAcordes] = useState<Acorde[]>([]);
+  const [mode, setMode] = useState<"exact" | "repertoire">(initialMode);
 
-  const [exactSongs, setExactSongs] = useState<Song[]>([]);
-  const [repertoireSongs, setRepertoireSongs] = useState<Song[]>([]);
-
-  const [repertoireSearched, setRepertoireSearched] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const [capo, setCapo] = useState(true);
-
-  const visibleRoots = useMemo(
-    () =>
-      ROOTS.filter((r) =>
-        r
-          .toLowerCase()
-          .startsWith(query.trim().toLowerCase().slice(0, 1)),
-      ),
-    [query],
+  const [exactDegrees, setExactDegrees] = useState<string[]>(
+    initialMode === "exact" && initialItems.length > 0 ? initialItems : ["I", "V", "VI", "IV"]
+  );
+  const [repertoireChords, setRepertoireChords] = useState<string[]>(
+    initialMode === "repertoire" && initialItems.length > 0 ? initialItems : []
   );
 
-  const chords = mode === "exact" ? exactChords : repertoireChords;
+  const [exactSearched, setExactSearched] = useState(false);
+  const [repertoireSearched, setRepertoireSearched] = useState(false);
 
-  const addChord = (chord: string) => {
+  const [exactSongs, setExactSongs] = useState<SongSearchResult[]>([]);
+  const [repertoireSongs, setRepertoireSongs] = useState<SongSearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const executarBusca = useCallback(
+    async (searchMode: "exact" | "repertoire", items: string[]) => {
+      if (items.length === 0) return;
+
+      setLoading(true);
+
+      try {
+        const params = new URLSearchParams();
+        const paramName = searchMode === "exact" ? "graus" : "acordes";
+
+        items.forEach((val) => {
+          params.append(paramName, val);
+        });
+
+        const endpoint = searchMode === "exact" ? "sequencia" : "repertorio";
+
+        const response = await fetch(
+          `${API_URL}/musicas/busca/${endpoint}?${params.toString()}`
+        );
+
+        if (!response.ok) throw new Error("Erro ao buscar músicas.");
+
+        if (searchMode === "exact") {
+          const data: SongSearchResult[] = await response.json();
+          setExactSongs(data);
+          setExactSearched(true);
+        } else {
+          const data: SongSearchResult[] = await response.json();
+          setRepertoireSongs(data);
+          setRepertoireSearched(true);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar músicas:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    async function carregarAcordes() {
+      try {
+        const response = await fetch(`${API_URL}/acordes/`);
+        if (!response.ok) throw new Error("Erro ao buscar acordes.");
+        const data: Acorde[] = await response.json();
+        setAcordes(data);
+      } catch (error) {
+        console.error("Erro ao carregar acordes:", error);
+      }
+    }
+    carregarAcordes();
+  }, []);
+
+  useEffect(() => {
+    if (initialMode) {
+      setMode(initialMode);
+    }
+    if (initialItems && initialItems.length > 0) {
+      if (initialMode === "repertoire") {
+        setRepertoireChords(initialItems);
+      } else {
+        setExactDegrees(initialItems);
+      }
+
+      if (autoSearch) {
+        executarBusca(initialMode, initialItems);
+      }
+    }
+  }, [initialMode, initialItems, autoSearch, executarBusca]);
+
+  const acordesPorFundamental = acordes.reduce<Record<string, Acorde[]>>(
+    (grupos, acorde) => {
+      const fundamental = acorde.nota_fundamental;
+      const grupo = grupos[fundamental] ?? [];
+      grupo.push(acorde);
+      grupos[fundamental] = grupo;
+      return grupos;
+    },
+    {}
+  );
+
+  const addItem = (item: string) => {
     if (mode === "exact") {
-      setExactChords((prev) => [...prev, chord]);
+      setExactDegrees((prev) => [...prev, item]);
     } else {
-      setRepertoireChords((prev) => [...prev, chord]);
+      setRepertoireChords((prev) => [...prev, item]);
     }
   };
 
-  const removeChord = (index: number) => {
+  const removeItem = (index: number) => {
     if (mode === "exact") {
-      setExactChords((prev) => prev.filter((_, i) => i !== index));
+      setExactDegrees((prev) => prev.filter((_, i) => i !== index));
     } else {
       setRepertoireChords((prev) => prev.filter((_, i) => i !== index));
     }
   };
 
-  const handleSearch = async () => {
-    if (mode === "exact") {
-      return;
-    }
-
-    if (repertoireChords.length === 0) {
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const params = new URLSearchParams();
-
-      repertoireChords.forEach((acorde) => {
-        params.append("acordes", acorde);
-      });
-
-      const response = await fetch(
-        `${API_URL}/musicas/busca/repertorio?${params.toString()}`,
-      );
-
-      if (!response.ok) {
-        throw new Error("Erro ao buscar músicas.");
-      }
-
-      const data: Song[] = await response.json();
-
-      setRepertoireSongs(data);
-      setRepertoireSearched(true);
-    } catch (error) {
-      console.error("Erro ao buscar músicas:", error);
-    } finally {
-      setLoading(false);
-    }
+  const handleSearch = () => {
+    const items = mode === "exact" ? exactDegrees : repertoireChords;
+    executarBusca(mode, items);
   };
+
+  const currentItems = mode === "exact" ? exactDegrees : repertoireChords;
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 px-4 pb-16 sm:px-6">
@@ -95,7 +160,7 @@ export function ManualPanel() {
             {
               id: "exact",
               label: "Sequência Exata",
-              hint: "A ordem importa",
+              hint: "Busca por graus independentes de tom",
               icon: ListOrdered,
             },
             {
@@ -124,78 +189,32 @@ export function ManualPanel() {
 
       <p className="text-sm text-muted-foreground">
         {mode === "exact"
-          ? "Buscamos músicas com essa progressão na mesma ordem."
+          ? "Buscamos músicas com essa progressão de graus."
           : "Buscamos músicas que usem apenas os acordes do seu repertório."}
       </p>
 
       <div className="glass space-y-5 rounded-2xl p-5">
-        <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && query.trim()) {
-                addChord(query.trim());
-                setQuery("");
-              }
-            }}
-            placeholder="Digite um acorde (ex: Am7) e pressione Enter"
-            className="w-full rounded-xl border border-border bg-background/60 py-3 pr-3 pl-9 text-sm outline-none focus:border-violet focus:ring-2 focus:ring-ring/40"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-          {(visibleRoots.length ? visibleRoots : ROOTS).map((root) => (
-            <div
-              key={root}
-              className="rounded-xl border border-border bg-background/40 p-2"
-            >
-              <button
-                onClick={() => addChord(root)}
-                className="w-full rounded-lg bg-secondary py-2 font-display text-lg font-semibold transition-colors hover:bg-[image:var(--gradient-manual)] hover:text-primary-foreground"
-              >
-                {root}
-              </button>
-
-              <div className="mt-2 grid grid-cols-3 gap-1">
-                {MODIFIERS.slice(1).map((mod) => (
-                  <button
-                    key={mod}
-                    onClick={() => addChord(root + mod)}
-                    className="rounded-md bg-muted py-1 text-[11px] text-muted-foreground transition-colors hover:bg-violet/30 hover:text-foreground"
-                  >
-                    {mod}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div>
+        <div className="sticky top-0 z-30 rounded-xl border-b border-border bg-[color-mix(in_oklab,var(--card)_85%,var(--background))] p-3 shadow-sm">
           <p className="mb-2 text-xs tracking-wide text-muted-foreground uppercase">
-            {mode === "exact" ? "Sequência selecionada" : "Meus acordes"}
+            {mode === "exact" ? "Sequência de Graus Selecionada" : "Meus acordes"}
           </p>
 
           <div className="flex min-h-12 flex-wrap items-center gap-2 rounded-xl border border-dashed border-border p-3">
-            {chords.length === 0 && (
+            {currentItems.length === 0 && (
               <span className="text-sm text-muted-foreground">
-                Nenhum acorde selecionado ainda.
+                Nenhum item selecionado ainda.
               </span>
             )}
 
-            {chords.map((chord, i) => (
+            {currentItems.map((item, i) => (
               <span
-                key={`${chord}-${i}`}
+                key={`${item}-${i}`}
                 className="flex items-center gap-2 rounded-full bg-[image:var(--gradient-manual)] px-3 py-1.5 text-sm font-medium text-primary-foreground"
               >
-                {chord}
-
+                {item}
                 <button
-                  onClick={() => removeChord(i)}
-                  aria-label={`Remover ${chord}`}
+                  onClick={() => removeItem(i)}
+                  aria-label={`Remover ${item}`}
                 >
                   <X className="size-3.5 opacity-80 hover:opacity-100" />
                 </button>
@@ -204,33 +223,69 @@ export function ManualPanel() {
           </div>
         </div>
 
-        {/* <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl bg-background/40 px-4 py-3">
-          <span className="text-sm">Considerar sugestões com Capotraste</span>
-          <button
-            role="switch"
-            aria-checked={capo}
-            onClick={() => setCapo((v) => !v)}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-              capo ? "bg-[image:var(--gradient-manual)]" : "bg-muted"
-            }`}
-          >
-            <span
-              className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-foreground transition-transform ${
-                capo ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </button>
-        </label> */}
+        {mode === "exact" ? (
+          <div className="rounded-xl border border-border bg-background/40 p-4">
+            <p className="mb-3 text-xs tracking-wide text-muted-foreground uppercase">
+              Clique nos graus para montar a sequência:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {GRAUS_DISPONIVEIS.map((grau) => (
+                <button
+                  key={grau}
+                  onClick={() => addItem(grau)}
+                  className="rounded-lg bg-secondary px-4 py-2 font-display text-sm font-semibold text-secondary-foreground transition-colors hover:bg-violet/40 hover:text-foreground"
+                >
+                  {grau}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {Object.entries(acordesPorFundamental).map(
+              ([fundamental, acordesDaFundamental]) => (
+                <div
+                  key={fundamental}
+                  className="rounded-xl border border-border bg-background/40 p-2"
+                >
+                  <div className="rounded-lg bg-secondary py-2 text-center font-display text-lg font-semibold">
+                    {fundamental}
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-1.5">
+                    {acordesDaFundamental.map((acorde) => (
+                      <button
+                        key={acorde.id}
+                        onClick={() => addItem(acorde.nome_cifra)}
+                        title={`Adicionar ${acorde.nome_cifra}`}
+                        className="min-w-0 rounded-md bg-muted px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-violet/30 hover:text-foreground"
+                      >
+                        {acorde.nome_cifra}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        )}
 
         <button
           onClick={handleSearch}
-          disabled={loading || chords.length === 0}
+          disabled={loading || currentItems.length === 0}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-[image:var(--gradient-manual)] px-6 py-3.5 font-display font-semibold text-primary-foreground shadow-[var(--shadow-glow-manual)] transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Sparkles className="size-4" />
-          {loading ? "Buscando..." : "Buscar Músicas"}
+          {loading
+            ? "Buscando..."
+            : mode === "exact"
+              ? "Buscar Músicas por Graus"
+              : "Buscar Músicas no Meu Repertório"}
         </button>
       </div>
+
+      {mode === "exact" && exactSearched && (
+        <SongResults songs={exactSongs} searchedSequence={exactDegrees} tone="manual" />
+      )}
 
       {mode === "repertoire" && repertoireSearched && (
         <SongResults songs={repertoireSongs} tone="manual" />
@@ -238,5 +293,3 @@ export function ManualPanel() {
     </div>
   );
 }
-
-

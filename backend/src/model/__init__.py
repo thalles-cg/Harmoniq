@@ -11,6 +11,7 @@ from .musica_genero import MusicaGenero
 from .nota import Nota
 from .usuario import Usuario
 from .usuario_acorde import UsuarioAcorde
+from .musica_interrupcao import MusicaInterrupcao
 
 __all__ = [
   "Album",
@@ -23,7 +24,8 @@ __all__ = [
   "MusicaAcorde",
   "MusicaArtista",
   "MusicaGenero",
+  "MusicaInterrupcao",
   "Nota",
   "Usuario",
-  "UsuarioAcorde",
+  "UsuarioAcorde"
 ]

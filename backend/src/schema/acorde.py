@@ -19,4 +19,5 @@ class AcordeUpdate(BaseModel):
 
 class AcordeResponse(AcordeBase):
   id: int
+  nota_fundamental: str
   model_config = ConfigDict(from_attributes=True)
